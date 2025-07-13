@@ -20,6 +20,7 @@ import {
 } from 'lucide-react'
 import { toast } from 'sonner'
 import Link from 'next/link'
+import { formatPrice } from '@/lib/utils'
 
 interface OrderWithTable extends Order {
   tables: {
@@ -136,9 +137,6 @@ export default function AdminOrdersPage() {
     }
   }
 
-  const formatPrice = (price: number) => {
-    return `¥${price.toLocaleString()}`
-  }
 
   const formatTime = (dateString: string) => {
     return new Date(dateString).toLocaleTimeString('ja-JP', {

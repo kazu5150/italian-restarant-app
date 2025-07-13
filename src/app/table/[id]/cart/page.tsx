@@ -12,6 +12,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Separator } from '@/components/ui/separator'
 import { ArrowLeft, Plus, Minus, Trash2, UtensilsCrossed, CheckCircle } from 'lucide-react'
 import { toast } from 'sonner'
+import { formatPrice } from '@/lib/utils'
 
 export default function CartPage() {
   const params = useParams()
@@ -37,9 +38,6 @@ export default function CartPage() {
     toast.success('商品をカートから削除しました')
   }
 
-  const formatPrice = (price: number) => {
-    return `¥${price.toLocaleString()}`
-  }
 
   const handleSubmitOrder = async () => {
     if (cart.length === 0) {
@@ -50,9 +48,6 @@ export default function CartPage() {
     setLoading(true)
     
     try {
-      console.log('Submitting order for table:', tableId)
-      console.log('Cart items:', cart)
-      console.log('Total amount:', getTotalAmount())
       
       // Check if we have a valid table ID - for now, we'll get or create one
       let actualTableId = tableId
@@ -71,7 +66,6 @@ export default function CartPage() {
       
       if (existingTable) {
         actualTableId = existingTable.id
-        console.log('Found existing table ID:', actualTableId)
       } else {
         // Create a new table entry if it doesn't exist
         const { data: newTable, error: createTableError } = await supabase
@@ -90,7 +84,6 @@ export default function CartPage() {
         }
         
         actualTableId = newTable.id
-        console.log('Created new table ID:', actualTableId)
       }
       
       // Create order
@@ -101,7 +94,6 @@ export default function CartPage() {
         status: 'pending' as const
       }
       
-      console.log('Creating order with data:', JSON.stringify(orderData, null, 2))
       
       const { data: newOrder, error: orderError } = await supabase
         .from('orders')
@@ -120,7 +112,6 @@ export default function CartPage() {
         throw orderError
       }
 
-      console.log('Order created successfully:', newOrder)
 
       // Create order items
       const orderItems = cart.map(cartItem => ({
@@ -130,7 +121,6 @@ export default function CartPage() {
         unit_price: cartItem.item.price
       }))
 
-      console.log('Creating order items:', orderItems)
 
       const { error: itemsError } = await supabase
         .from('order_items')
@@ -147,7 +137,6 @@ export default function CartPage() {
         throw itemsError
       }
 
-      console.log('Order items created successfully')
 
       // Clear cart after successful order
       clearCart()

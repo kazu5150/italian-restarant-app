@@ -23,6 +23,7 @@ export type Tables = {
   menu_categories: {
     id: string
     name: string
+    description?: string
     display_order: number
     created_at: string
   }
@@ -40,7 +41,7 @@ export type Tables = {
   orders: {
     id: string
     table_id: string
-    status: 'pending' | 'preparing' | 'ready' | 'completed' | 'cancelled'
+    status: 'pending' | 'confirmed' | 'preparing' | 'ready' | 'served' | 'completed' | 'cancelled'
     total_amount: number
     special_requests: string | null
     created_at: string

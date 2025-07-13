@@ -45,7 +45,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
       name: '注文管理',
       href: '/admin/orders',
       icon: ShoppingCart,
-      badge: 3 // TODO: Get real pending orders count
+      // Note: Badge count could be dynamically loaded from pending orders
     },
     {
       name: 'メニュー管理',
@@ -156,7 +156,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
             size="sm"
             className={`w-full ${sidebarCollapsed ? 'px-2' : 'justify-start'}`}
             onClick={() => {
-              // TODO: Implement logout
+              // Simple logout - redirect to homepage
               window.location.href = '/'
             }}
           >

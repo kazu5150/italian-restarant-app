@@ -29,7 +29,7 @@ export function QRScanner({ onScanSuccess, onError }: QRScannerProps) {
           },
           {
             onDecodeError: (err) => {
-              console.log('QR decode error:', err)
+              // QR decode error (non-critical)
             },
             highlightScanRegion: true,
             highlightCodeOutline: true,

@@ -19,6 +19,7 @@ import {
   Download,
   Filter
 } from 'lucide-react'
+import { formatPrice } from '@/lib/utils'
 
 interface ReportData {
   dailySales: Array<{
@@ -165,10 +166,6 @@ export default function AdminReports() {
       orders: data.orders,
       revenue: data.revenue
     }))
-  }
-
-  const formatPrice = (price: number) => {
-    return `¥${price.toLocaleString()}`
   }
 
   const handlePeriodChange = (period: ReportFilters['period']) => {

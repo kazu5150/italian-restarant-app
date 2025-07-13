@@ -1,150 +1,189 @@
-# Bella Vista - Italian Restaurant QR Ordering System
+# 🍝 Bella Vista - イタリアンレストラン QRコード注文システム
 
-A modern, mobile-first QR code-based ordering system for Italian restaurants built with Next.js 14, Supabase, and shadcn/ui.
+Next.js 14、Supabase、shadcn/uiで構築された、モダンでモバイルファーストなQRコードベースの注文システムです。
 
-## 🌟 Features
+## 🌟 主な機能
 
-### Customer Features
-- **QR Code Scanning**: Scan table QR codes to access menu
-- **Digital Menu**: Browse menu by categories with images and descriptions
-- **Shopping Cart**: Add items, adjust quantities, and manage orders
-- **Real-time Order Tracking**: Live updates on order status
-- **Mobile Optimized**: Responsive design for smartphones
-- **Multilingual Support**: Japanese and English interface
+### お客様向け機能
+- **QRコードスキャン**: テーブルのQRコードをスキャンしてメニューにアクセス
+- **デジタルメニュー**: 画像と説明付きのカテゴリ別メニュー表示
+- **ショッピングカート**: アイテムの追加、数量調整、注文管理
+- **リアルタイム注文追跡**: 注文状況のライブ更新
+- **モバイル最適化**: スマートフォン向けレスポンシブデザイン
+- **多言語対応**: 日本語・英語インターフェース
 
-### Staff Features
-- **Real-time Order Management**: Live dashboard for incoming orders
-- **Order Status Updates**: Change order status (pending → preparing → ready → completed)
-- **Table Management**: Manage table status and generate QR codes
-- **Menu Management**: Add, edit, and manage menu items
-- **Sales Dashboard**: View order statistics and revenue
+### スタッフ向け機能
+- **リアルタイム注文管理**: 受注のライブダッシュボード
+- **注文ステータス更新**: 注文状況の変更（受付中 → 調理中 → 完成 → 提供済み）
+- **テーブル管理**: テーブル状況管理とQRコード生成
+- **メニュー管理**: メニューアイテムの追加・編集・管理
+- **売上ダッシュボード**: 注文統計と売上表示
 
-### Technical Features
-- **Real-time Updates**: Supabase real-time subscriptions
-- **Modern UI**: shadcn/ui with custom Italian restaurant theme
-- **Type Safety**: Full TypeScript implementation
-- **Responsive Design**: Mobile-first approach
-- **QR Code Generation**: Automatic QR code creation for tables
+### 技術的特徴
+- **リアルタイム更新**: Supabaseリアルタイム購読
+- **モダンUI**: カスタムイタリアンレストランテーマのshadcn/ui
+- **型安全性**: 完全なTypeScript実装
+- **レスポンシブデザイン**: モバイルファーストアプローチ
+- **QRコード生成**: テーブル用自動QRコード作成
 
-## 🛠 Tech Stack
+## 🛠 技術スタック
 
-- **Frontend**: Next.js 14 (App Router), React, TypeScript
-- **Backend**: Supabase (PostgreSQL, Real-time, Auth)
+- **フロントエンド**: Next.js 14 (App Router), React, TypeScript
+- **バックエンド**: Supabase (PostgreSQL, リアルタイム, 認証)
 - **UI**: shadcn/ui, Tailwind CSS
-- **QR Codes**: react-qr-code, qr-scanner
-- **Icons**: Lucide React
-- **Notifications**: Sonner
+- **QRコード**: react-qr-code, qr-scanner
+- **アイコン**: Lucide React
+- **通知**: Sonner
 
-## 🚀 Getting Started
+## 🚀 セットアップ
 
-### Prerequisites
+### 前提条件
 
 - Node.js 18+ 
-- npm or yarn
-- Supabase account
+- npm または yarn
+- Supabaseアカウント
 
-### Installation
+### インストール手順
 
-1. **Clone the repository**
+1. **リポジトリをクローン**
    ```bash
    git clone <repository-url>
    cd italian-restaurant
    ```
 
-2. **Install dependencies**
+2. **依存関係をインストール**
    ```bash
    npm install
    ```
 
-3. **Set up Supabase**
-   - Create a new Supabase project at [supabase.com](https://supabase.com)
-   - Copy your project URL and anon key
-   - Run the SQL commands from `supabase-schema.sql` in your Supabase SQL editor
+3. **Supabaseをセットアップ**
+   - [supabase.com](https://supabase.com)で新しいSupabaseプロジェクトを作成
+   - プロジェクトURLとanon keyをコピー
+   - Supabase SQL エディターで`supabase-schema.sql`のSQLコマンドを実行
 
-4. **Configure environment variables**
+4. **環境変数を設定**
    ```bash
-   cp .env.local.example .env.local
+   cp .env.example .env.local
    ```
    
-   Edit `.env.local` and add your Supabase credentials:
+   `.env.local`を編集してSupabaseの認証情報を追加:
    ```env
    NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
    NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
    NEXT_PUBLIC_APP_URL=http://localhost:3000
    ```
 
-5. **Run the development server**
+5. **開発サーバーを起動**
    ```bash
    npm run dev
    ```
 
-6. **Open the application**
-   - Customer interface: [http://localhost:3000](http://localhost:3000)
-   - Admin dashboard: [http://localhost:3000/admin](http://localhost:3000/admin)
+6. **アプリケーションを開く**
+   - お客様インターフェース: [http://localhost:3000](http://localhost:3000)
+   - 管理者ダッシュボード: [http://localhost:3000/admin](http://localhost:3000/admin)
 
-## 📱 Usage
+## 📱 使用方法
 
-### For Customers
+### お客様の場合
 
-1. **Scan QR Code**: Use your phone's camera to scan the table's QR code
-2. **Browse Menu**: View menu items organized by categories
-3. **Add to Cart**: Select items and quantities
-4. **Place Order**: Review and confirm your order
-5. **Track Status**: Monitor your order's preparation status
+1. **QRコードをスキャン**: スマートフォンのカメラでテーブルのQRコードをスキャン
+2. **メニューを閲覧**: カテゴリ別に整理されたメニューアイテムを表示
+3. **カートに追加**: アイテムと数量を選択
+4. **注文確定**: 注文内容を確認して決定
+5. **ステータス追跡**: 注文の調理状況をモニター
 
-### For Staff
+### スタッフの場合
 
-1. **Access Admin Dashboard**: Go to `/admin`
-2. **Manage Orders**: View and update order statuses in real-time
-3. **Table Management**: Add tables and generate QR codes
-4. **Menu Management**: Add, edit, or disable menu items
+1. **管理者ダッシュボードにアクセス**: `/admin`に移動
+2. **注文管理**: リアルタイムで注文を確認し、ステータスを更新
+3. **テーブル管理**: テーブルを追加し、QRコードを生成
+4. **メニュー管理**: メニューアイテムの追加・編集・無効化
 
-## 🎨 Design System
+## 🎨 デザインシステム
 
-### Color Palette
-- **Primary** (Tomato Red): `oklch(0.47 0.15 25)`
-- **Secondary** (Basil Green): `oklch(0.25 0.02 120)`
-- **Accent** (Parmesan Yellow): `oklch(0.75 0.12 85)`
+### カラーパレット（イタリアンテーマ）
+- **プライマリ**（トマトレッド）: `oklch(0.47 0.15 25)`
+- **セカンダリ**（バジルグリーン）: `oklch(0.25 0.02 120)`
+- **アクセント**（パルメザンイエロー）: `oklch(0.75 0.12 85)`
 
-### Typography
-- Uses Geist Sans for a modern, clean look
-- Responsive font sizes optimized for mobile
+### タイポグラフィ
+- モダンでクリーンな見た目のGeist Sansを使用
+- モバイル向けに最適化されたレスポンシブフォントサイズ
 
-## 🗂 Project Structure
+## 🗂 プロジェクト構造
 
 ```
 src/
-├── app/                    # Next.js App Router pages
-│   ├── admin/             # Admin dashboard pages
-│   ├── table/[id]/        # Customer-facing table pages
-│   │   ├── menu/          # Menu display
-│   │   ├── cart/          # Shopping cart
-│   │   └── order/[orderId]/ # Order status
-│   ├── layout.tsx         # Root layout
-│   └── page.tsx           # Landing page
-├── components/            # Reusable components
-│   ├── ui/               # shadcn/ui components
-│   ├── qr-scanner.tsx    # QR code scanner
-│   └── qr-generator.tsx  # QR code generator
+├── app/                    # Next.js App Router ページ
+│   ├── admin/             # 管理者ダッシュボードページ
+│   ├── table/[id]/        # お客様向けテーブルページ
+│   │   ├── menu/          # メニュー表示
+│   │   ├── cart/          # ショッピングカート
+│   │   └── order/[orderId]/ # 注文ステータス
+│   ├── layout.tsx         # ルートレイアウト
+│   └── page.tsx           # ランディングページ
+├── components/            # 再利用可能コンポーネント
+│   ├── ui/               # shadcn/ui コンポーネント
+│   ├── qr-scanner.tsx    # QRコードスキャナー
+│   └── qr-generator.tsx  # QRコード生成器
 └── lib/
-    └── supabase.ts       # Supabase client configuration
+    ├── supabase.ts       # Supabaseクライアント設定
+    ├── supabase-admin.ts # 管理者用CRUD操作
+    └── utils.ts          # 共通ユーティリティ関数
 ```
 
-## 🚀 Deployment
+## 🚀 デプロイ
 
-### Vercel (Recommended)
-1. Connect your GitHub repository to Vercel
-2. Add environment variables in Vercel dashboard
-3. Deploy automatically on push
+### Vercel（推奨）
+1. GitHubリポジトリをVercelに接続
+2. Vercelダッシュボードで環境変数を追加
+3. プッシュ時に自動デプロイ
 
-## 🔍 Next Steps
+## 📋 開発用コマンド
 
-To complete the setup:
+```bash
+npm run dev           # 開発サーバー起動
+npm run build         # 本番用ビルド
+npm run start         # 本番サーバー起動
+npm run lint          # ESLint実行
+```
 
-1. **Create a Supabase project** and run the schema
-2. **Configure environment variables** 
-3. **Test the QR code flow** from scanning to order completion
-4. **Customize the menu** with your restaurant's items
-5. **Deploy to Vercel** for production use
+## 🔧 開発用ツール
 
-This is a production-ready Italian restaurant ordering system with modern design and real-time functionality!
+### CRUD テストインターフェース
+`/admin/test-crud`で以下が可能：
+- データベース接続テスト
+- CRUD操作の検証
+- パフォーマンステスト
+- スキーマ検証
+
+### よくある問題と解決方法
+
+1. **「column capacity does not exist」エラー**
+   - `fix-tables-schema.sql`を実行
+
+2. **RLSポリシー違反**
+   - `supabase-rls-policies.sql`が実行されているか確認
+
+3. **QRスキャンが動作しない**
+   - カメラ権限とHTTPS要件を確認
+
+## 🔒 セキュリティ注意事項
+
+⚠️ **重要**: 現在の設定は開発専用です。本番環境では適切な認証とロールベースのポリシーを実装してください。
+
+## 🎯 次のステップ
+
+セットアップを完了するには：
+
+1. **Supabaseプロジェクトの作成**とスキーマ実行
+2. **環境変数の設定**
+3. **QRコードフローのテスト**（スキャンから注文完了まで）
+4. **メニューのカスタマイズ**（レストランのアイテムに合わせて）
+5. **本番環境へのデプロイ**
+
+これは本格的なイタリアンレストラン注文システムで、モダンなデザインとリアルタイム機能を備えています！
+
+## 📄 ライセンス
+
+このプロジェクトはMITライセンスの下で公開されています。

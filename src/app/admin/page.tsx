@@ -19,6 +19,7 @@ import {
   AlertCircle
 } from 'lucide-react'
 import Link from 'next/link'
+import { formatPrice } from '@/lib/utils'
 
 interface DashboardStats {
   totalOrders: number
@@ -37,6 +38,9 @@ interface RecentOrder {
   total_amount: number
   created_at: string
   table_number?: number
+  tables?: {
+    table_number: number
+  }
 }
 
 export default function AdminDashboard() {
@@ -116,7 +120,7 @@ export default function AdminDashboard() {
         status: order.status,
         total_amount: order.total_amount,
         created_at: order.created_at,
-        table_number: order.tables?.table_number
+        table_number: (order as any).tables?.table_number
       }))
 
       setRecentOrders(formattedOrders)
@@ -125,10 +129,6 @@ export default function AdminDashboard() {
     } finally {
       setLoading(false)
     }
-  }
-
-  const formatPrice = (price: number) => {
-    return `¥${price.toLocaleString()}`
   }
 
   const getStatusBadge = (status: string) => {

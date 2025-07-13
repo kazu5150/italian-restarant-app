@@ -28,6 +28,7 @@ import {
   menuCategoriesAdmin,
   menuItemsAdmin
 } from '@/lib/supabase-admin'
+import { formatPrice } from '@/lib/utils'
 
 export default function AdminMenuPage() {
   const [categories, setCategories] = useState<MenuCategory[]>([])
@@ -72,10 +73,6 @@ export default function AdminMenuPage() {
     } finally {
       setLoading(false)
     }
-  }
-
-  const formatPrice = (price: number) => {
-    return `¥${price.toLocaleString()}`
   }
 
   const getCategoryName = (categoryId: string) => {

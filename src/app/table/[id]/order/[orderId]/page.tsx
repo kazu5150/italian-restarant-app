@@ -17,6 +17,7 @@ import {
   RefreshCw
 } from 'lucide-react'
 import { toast } from 'sonner'
+import { formatPrice } from '@/lib/utils'
 
 interface OrderWithItems extends Order {
   order_items: (OrderItem & {
@@ -91,10 +92,6 @@ export default function OrderStatusPage() {
   const handleRefresh = () => {
     setRefreshing(true)
     fetchOrder()
-  }
-
-  const formatPrice = (price: number) => {
-    return `¥${price.toLocaleString()}`
   }
 
   const getStatusSteps = (currentStatus: Order['status']): StatusStep[] => {

@@ -11,6 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { ShoppingCart, Plus, Minus, UtensilsCrossed, Clock, Heart, Receipt, ChefHat } from 'lucide-react'
 import { toast } from 'sonner'
 import Image from 'next/image'
+import { formatPrice } from '@/lib/utils'
 
 export default function MenuPage() {
   const params = useParams()
@@ -83,7 +84,6 @@ export default function MenuPage() {
         .single()
 
       if (tableError) {
-        console.log('No existing table found for table number:', tableId)
         setCurrentOrders([])
         toast.info('まだ注文がありません')
         return
@@ -132,9 +132,6 @@ export default function MenuPage() {
     return menuItems.filter(item => item.category_id === categoryId)
   }
 
-  const formatPrice = (price: number) => {
-    return `¥${price.toLocaleString()}`
-  }
 
   const getAllergensText = (allergens: string[]) => {
     if (!allergens || allergens.length === 0) return ''

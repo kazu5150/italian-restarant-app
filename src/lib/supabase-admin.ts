@@ -527,7 +527,7 @@ export const testConnection = async () => {
     
     if (error) throw error
     
-    console.log('✅ Supabase connection successful')
+    // Supabase connection successful
     toast.success('データベース接続成功')
     return true
   } catch (error) {
