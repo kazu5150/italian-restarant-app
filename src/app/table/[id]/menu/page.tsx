@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { ShoppingCart, Plus, Minus, UtensilsCrossed, Clock, Heart } from 'lucide-react'
+import { ShoppingCart, Plus, Minus, UtensilsCrossed, Clock, Heart, Receipt, ChefHat } from 'lucide-react'
 import { toast } from 'sonner'
 import Image from 'next/image'
 
@@ -28,6 +28,8 @@ export default function MenuPage() {
   const [menuItems, setMenuItems] = useState<MenuItem[]>([])
   const [loading, setLoading] = useState(true)
   const [activeCategory, setActiveCategory] = useState('')
+  const [currentOrders, setCurrentOrders] = useState<any[]>([])
+  const [loadingOrders, setLoadingOrders] = useState(false)
 
   useEffect(() => {
     const fetchMenuData = async () => {
@@ -68,6 +70,62 @@ export default function MenuPage() {
   const handleAddToCart = (item: MenuItem) => {
     addToCart(item)
     toast.success(`${item.name} をカートに追加しました`)
+  }
+
+  const fetchCurrentOrders = async () => {
+    setLoadingOrders(true)
+    try {
+      // First get the table UUID
+      const { data: tableData, error: tableError } = await supabase
+        .from('tables')
+        .select('id')
+        .eq('table_number', parseInt(tableId))
+        .single()
+
+      if (tableError) {
+        console.log('No existing table found for table number:', tableId)
+        setCurrentOrders([])
+        toast.info('まだ注文がありません')
+        return
+      }
+
+      // Get orders for this table
+      const { data: ordersData, error: ordersError } = await supabase
+        .from('orders')
+        .select(`
+          id,
+          status,
+          total_amount,
+          created_at,
+          special_requests,
+          order_items (
+            quantity,
+            unit_price,
+            menu_items (
+              name
+            )
+          )
+        `)
+        .eq('table_id', tableData.id)
+        .neq('status', 'served') // Don't show completed orders
+        .neq('status', 'cancelled')
+        .order('created_at', { ascending: false })
+
+      if (ordersError) throw ordersError
+
+      setCurrentOrders(ordersData || [])
+      
+      if (!ordersData || ordersData.length === 0) {
+        toast.info('現在進行中の注文はありません')
+      } else {
+        toast.success(`${ordersData.length}件の注文を確認しました`)
+      }
+    } catch (error) {
+      console.error('Error fetching orders:', error)
+      toast.error('注文情報の取得に失敗しました')
+    } finally {
+      setLoadingOrders(false)
+    }
   }
 
   const getCategoryItems = (categoryId: string) => {
@@ -119,32 +177,133 @@ export default function MenuPage() {
               </div>
             </div>
             
-            <Button
-              variant="outline"
-              size="sm"
-              className="relative"
-              onClick={() => {
-                if (cart.length === 0) {
-                  toast.error('カートが空です')
-                  return
-                }
-                // Navigate to cart page
-                window.location.href = `/table/${tableId}/cart`
-              }}
-            >
-              <ShoppingCart className="h-4 w-4 mr-2" />
-              カート
-              {getTotalItems() > 0 && (
-                <Badge variant="destructive" className="absolute -top-2 -right-2 h-5 w-5 text-xs p-0 flex items-center justify-center">
-                  {getTotalItems()}
-                </Badge>
-              )}
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  fetchCurrentOrders()
+                }}
+                disabled={loadingOrders}
+              >
+                <Receipt className="h-4 w-4 mr-2" />
+                {loadingOrders ? '確認中...' : '注文確認'}
+                {currentOrders.length > 0 && (
+                  <Badge variant="destructive" className="ml-1 h-4 w-4 text-xs p-0 flex items-center justify-center">
+                    {currentOrders.length}
+                  </Badge>
+                )}
+              </Button>
+              
+              <Button
+                variant="outline"
+                size="sm"
+                className="relative"
+                onClick={() => {
+                  if (cart.length === 0) {
+                    toast.error('カートが空です')
+                    return
+                  }
+                  // Navigate to cart page
+                  window.location.href = `/table/${tableId}/cart`
+                }}
+              >
+                <ShoppingCart className="h-4 w-4 mr-2" />
+                カート
+                {getTotalItems() > 0 && (
+                  <Badge variant="destructive" className="absolute -top-2 -right-2 h-5 w-5 text-xs p-0 flex items-center justify-center">
+                    {getTotalItems()}
+                  </Badge>
+                )}
+              </Button>
+            </div>
           </div>
         </div>
       </div>
 
       <div className="container mx-auto px-4 py-6">
+        {/* Current Orders Section */}
+        {currentOrders.length > 0 && (
+          <div className="mb-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <ChefHat className="h-5 w-5 text-primary" />
+                  現在のご注文
+                </CardTitle>
+                <CardDescription>
+                  調理中・準備中の注文一覧
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {currentOrders.map((order) => (
+                  <div key={order.id} className="border rounded-lg p-4">
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center gap-2">
+                        <Badge 
+                          variant={
+                            order.status === 'pending' ? 'default' :
+                            order.status === 'confirmed' ? 'secondary' :
+                            order.status === 'preparing' ? 'destructive' :
+                            order.status === 'ready' ? 'outline' : 'default'
+                          }
+                        >
+                          {
+                            order.status === 'pending' ? '注文受付中' :
+                            order.status === 'confirmed' ? '注文確定' :
+                            order.status === 'preparing' ? '調理中' :
+                            order.status === 'ready' ? '提供準備完了' : order.status
+                          }
+                        </Badge>
+                        <span className="text-sm text-muted-foreground">
+                          #{order.id.slice(-8)}
+                        </span>
+                      </div>
+                      <div className="text-right">
+                        <div className="font-medium">
+                          ¥{order.total_amount.toLocaleString()}
+                        </div>
+                        <div className="text-xs text-muted-foreground">
+                          {new Date(order.created_at).toLocaleTimeString('ja-JP', {
+                            hour: '2-digit',
+                            minute: '2-digit'
+                          })}
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="space-y-1 mb-3">
+                      {order.order_items.map((item: any, index: number) => (
+                        <div key={index} className="flex justify-between text-sm">
+                          <span>{item.menu_items.name} × {item.quantity}</span>
+                          <span>¥{(item.unit_price * item.quantity).toLocaleString()}</span>
+                        </div>
+                      ))}
+                    </div>
+                    
+                    {order.special_requests && (
+                      <div className="text-xs text-muted-foreground mb-3">
+                        <strong>ご要望:</strong> {order.special_requests}
+                      </div>
+                    )}
+                    
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="w-full"
+                      onClick={() => {
+                        window.location.href = `/table/${tableId}/order/${order.id}`
+                      }}
+                    >
+                      詳細を見る
+                    </Button>
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
         <Tabs value={activeCategory} onValueChange={setActiveCategory} className="w-full">
           <TabsList className="grid w-full grid-cols-3 lg:grid-cols-6 mb-6">
             {categories.map((category) => (
