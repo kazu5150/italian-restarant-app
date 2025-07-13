@@ -201,8 +201,8 @@ export default function MenuPage() {
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {getCategoryItems(category.id).map((item) => (
                   <Card key={item.id} className="overflow-hidden">
-                    {item.image_url && (
-                      <div className="aspect-video relative overflow-hidden">
+                    <div className="aspect-video relative overflow-hidden bg-muted">
+                      {item.image_url ? (
                         <Image
                           src={item.image_url}
                           alt={item.name}
@@ -210,8 +210,12 @@ export default function MenuPage() {
                           className="object-cover"
                           sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                         />
-                      </div>
-                    )}
+                      ) : (
+                        <div className="flex items-center justify-center h-full">
+                          <UtensilsCrossed className="h-12 w-12 text-muted-foreground/50" />
+                        </div>
+                      )}
+                    </div>
                     
                     <CardHeader className="pb-3">
                       <div className="flex items-start justify-between">
