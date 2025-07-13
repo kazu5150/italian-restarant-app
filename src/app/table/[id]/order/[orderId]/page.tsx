@@ -98,7 +98,7 @@ export default function OrderStatusPage() {
   }
 
   const getStatusSteps = (currentStatus: Order['status']): StatusStep[] => {
-    const statusOrder: Order['status'][] = ['pending', 'preparing', 'ready', 'completed']
+    const statusOrder: Order['status'][] = ['pending', 'confirmed', 'preparing', 'ready', 'served']
     const currentIndex = statusOrder.indexOf(currentStatus)
 
     return [
@@ -111,11 +111,19 @@ export default function OrderStatusPage() {
         current: currentStatus === 'pending'
       },
       {
+        status: 'confirmed',
+        label: '注文確定',
+        description: 'ご注文を確認しました',
+        icon: CheckCircle,
+        completed: currentIndex >= 1,
+        current: currentStatus === 'confirmed'
+      },
+      {
         status: 'preparing',
         label: '調理中',
         description: 'シェフが調理を開始しました',
         icon: ChefHat,
-        completed: currentIndex >= 1,
+        completed: currentIndex >= 2,
         current: currentStatus === 'preparing'
       },
       {
@@ -123,16 +131,16 @@ export default function OrderStatusPage() {
         label: '提供準備完了',
         description: 'お料理の準備ができました',
         icon: Truck,
-        completed: currentIndex >= 2,
+        completed: currentIndex >= 3,
         current: currentStatus === 'ready'
       },
       {
-        status: 'completed',
+        status: 'served',
         label: '提供完了',
         description: 'お料理をお楽しみください',
         icon: UtensilsCrossed,
-        completed: currentIndex >= 3,
-        current: currentStatus === 'completed'
+        completed: currentIndex >= 4,
+        current: currentStatus === 'served'
       }
     ]
   }
@@ -140,12 +148,14 @@ export default function OrderStatusPage() {
   const getEstimatedTime = (status: Order['status']) => {
     switch (status) {
       case 'pending':
+        return 'ご注文を確認中です'
+      case 'confirmed':
         return '5分以内に調理開始予定'
       case 'preparing':
         return '15-20分で完成予定'
       case 'ready':
         return 'まもなくお席にお持ちします'
-      case 'completed':
+      case 'served':
         return 'ごゆっくりお楽しみください'
       default:
         return ''
@@ -156,11 +166,13 @@ export default function OrderStatusPage() {
     switch (status) {
       case 'pending':
         return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200'
-      case 'preparing':
+      case 'confirmed':
         return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200'
-      case 'ready':
+      case 'preparing':
         return 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200'
-      case 'completed':
+      case 'ready':
+        return 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200'
+      case 'served':
         return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
       case 'cancelled':
         return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
@@ -351,17 +363,31 @@ export default function OrderStatusPage() {
 
           {/* Additional Actions */}
           <div className="space-y-3">
+            {order.status === 'served' && (
+              <Button
+                className="w-full"
+                onClick={() => window.location.href = `/table/${tableId}/menu`}
+              >
+                追加注文する
+              </Button>
+            )}
+            
             <Button
               variant="outline"
               className="w-full"
               onClick={() => window.location.href = `/table/${tableId}/menu`}
             >
-              追加注文する
+              メニューに戻る
             </Button>
             
-            <p className="text-xs text-center text-muted-foreground">
-              ご不明な点がございましたらスタッフまでお声がけください
-            </p>
+            <div className="text-center space-y-1">
+              <p className="text-xs text-muted-foreground">
+                この画面は自動的に更新されます
+              </p>
+              <p className="text-xs text-muted-foreground">
+                ご不明な点がございましたらスタッフまでお声がけください
+              </p>
+            </div>
           </div>
         </div>
       </div>

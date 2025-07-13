@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
+import { useCart } from '@/contexts/CartContext'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -12,56 +13,28 @@ import { Separator } from '@/components/ui/separator'
 import { ArrowLeft, Plus, Minus, Trash2, UtensilsCrossed, CheckCircle } from 'lucide-react'
 import { toast } from 'sonner'
 
-interface CartItem {
-  id: string
-  name: string
-  price: number
-  quantity: number
-}
-
 export default function CartPage() {
   const params = useParams()
   const router = useRouter()
   const tableId = params.id as string
+  const { 
+    cart, 
+    updateQuantity, 
+    getTotalAmount, 
+    getTotalItems,
+    clearCart 
+  } = useCart()
   
-  const [cart, setCart] = useState<CartItem[]>([])
   const [specialRequests, setSpecialRequests] = useState('')
   const [loading, setLoading] = useState(false)
 
-  useEffect(() => {
-    // In a real app, this would come from context or localStorage
-    // For demo purposes, we'll create some sample cart items
-    const sampleCart: CartItem[] = [
-      { id: '1', name: 'マルゲリータ / Margherita', price: 1680, quantity: 1 },
-      { id: '2', name: 'カルボナーラ / Carbonara', price: 1580, quantity: 2 },
-    ]
-    setCart(sampleCart)
-  }, [])
-
-  const updateQuantity = (itemId: string, newQuantity: number) => {
-    if (newQuantity === 0) {
-      removeItem(itemId)
-      return
-    }
-    
-    setCart(prevCart =>
-      prevCart.map(item =>
-        item.id === itemId ? { ...item, quantity: newQuantity } : item
-      )
-    )
+  const handleUpdateQuantity = (itemId: string, newQuantity: number) => {
+    updateQuantity(itemId, newQuantity)
   }
 
-  const removeItem = (itemId: string) => {
-    setCart(prevCart => prevCart.filter(item => item.id !== itemId))
+  const handleRemoveItem = (itemId: string) => {
+    updateQuantity(itemId, 0)
     toast.success('商品をカートから削除しました')
-  }
-
-  const getTotalAmount = () => {
-    return cart.reduce((total, item) => total + (item.price * item.quantity), 0)
-  }
-
-  const getTotalItems = () => {
-    return cart.reduce((total, item) => total + item.quantity, 0)
   }
 
   const formatPrice = (price: number) => {
@@ -77,40 +50,132 @@ export default function CartPage() {
     setLoading(true)
     
     try {
+      console.log('Submitting order for table:', tableId)
+      console.log('Cart items:', cart)
+      console.log('Total amount:', getTotalAmount())
+      
+      // Check if we have a valid table ID - for now, we'll get or create one
+      let actualTableId = tableId
+      
+      // First, try to find an existing table with this number
+      const { data: existingTable, error: tableError } = await supabase
+        .from('tables')
+        .select('id')
+        .eq('table_number', parseInt(tableId))
+        .single()
+      
+      if (tableError && tableError.code !== 'PGRST116') { // PGRST116 = no rows found
+        console.error('Table lookup error:', tableError)
+        throw new Error('テーブル情報の取得に失敗しました')
+      }
+      
+      if (existingTable) {
+        actualTableId = existingTable.id
+        console.log('Found existing table ID:', actualTableId)
+      } else {
+        // Create a new table entry if it doesn't exist
+        const { data: newTable, error: createTableError } = await supabase
+          .from('tables')
+          .insert({
+            table_number: parseInt(tableId),
+            capacity: 4, // Default capacity
+            status: 'occupied'
+          })
+          .select('id')
+          .single()
+        
+        if (createTableError) {
+          console.error('Table creation error:', createTableError)
+          throw new Error('テーブルの作成に失敗しました')
+        }
+        
+        actualTableId = newTable.id
+        console.log('Created new table ID:', actualTableId)
+      }
+      
       // Create order
-      const { data: orderData, error: orderError } = await supabase
+      const orderData = {
+        table_id: actualTableId, // Use the UUID table ID
+        total_amount: getTotalAmount(),
+        special_requests: specialRequests || null,
+        status: 'pending' as const
+      }
+      
+      console.log('Creating order with data:', JSON.stringify(orderData, null, 2))
+      
+      const { data: newOrder, error: orderError } = await supabase
         .from('orders')
-        .insert({
-          table_id: tableId,
-          total_amount: getTotalAmount(),
-          special_requests: specialRequests || null,
-          status: 'pending'
-        })
+        .insert(orderData)
         .select()
         .single()
 
-      if (orderError) throw orderError
+      if (orderError) {
+        console.error('Order creation error details:', {
+          error: orderError,
+          message: orderError.message,
+          details: orderError.details,
+          hint: orderError.hint,
+          code: orderError.code
+        })
+        throw orderError
+      }
+
+      console.log('Order created successfully:', newOrder)
 
       // Create order items
-      const orderItems = cart.map(item => ({
-        order_id: orderData.id,
-        menu_item_id: item.id,
-        quantity: item.quantity,
-        unit_price: item.price
+      const orderItems = cart.map(cartItem => ({
+        order_id: newOrder.id,
+        menu_item_id: cartItem.item.id,
+        quantity: cartItem.quantity,
+        unit_price: cartItem.item.price
       }))
+
+      console.log('Creating order items:', orderItems)
 
       const { error: itemsError } = await supabase
         .from('order_items')
         .insert(orderItems)
 
-      if (itemsError) throw itemsError
+      if (itemsError) {
+        console.error('Order items creation error details:', {
+          error: itemsError,
+          message: itemsError.message,
+          details: itemsError.details,
+          hint: itemsError.hint,
+          code: itemsError.code
+        })
+        throw itemsError
+      }
 
+      console.log('Order items created successfully')
+
+      // Clear cart after successful order
+      clearCart()
       toast.success('ご注文を承りました！')
-      router.push(`/table/${tableId}/order/${orderData.id}`)
+      router.push(`/table/${tableId}/order/${newOrder.id}`)
       
     } catch (error) {
-      console.error('Error submitting order:', error)
-      toast.error('注文の送信に失敗しました')
+      console.error('Error submitting order - Full error object:', error)
+      console.error('Error as JSON:', JSON.stringify(error, null, 2))
+      
+      // More detailed error message
+      let errorMessage = '注文の送信に失敗しました'
+      if (error && typeof error === 'object') {
+        if ('message' in error && error.message) {
+          errorMessage += `: ${error.message}`
+        }
+        if ('details' in error && error.details) {
+          errorMessage += ` (${error.details})`
+        }
+        if ('hint' in error && error.hint) {
+          errorMessage += ` - ヒント: ${error.hint}`
+        }
+        if ('code' in error && error.code) {
+          errorMessage += ` [コード: ${error.code}]`
+        }
+      }
+      
+      toast.error(errorMessage)
     } finally {
       setLoading(false)
     }
@@ -168,13 +233,13 @@ export default function CartPage() {
                   </Button>
                 </div>
               ) : (
-                cart.map((item, index) => (
-                  <div key={item.id}>
+                cart.map((cartItem, index) => (
+                  <div key={cartItem.item.id}>
                     <div className="flex items-center justify-between">
                       <div className="flex-1">
-                        <h3 className="font-medium">{item.name}</h3>
+                        <h3 className="font-medium">{cartItem.item.name}</h3>
                         <p className="text-sm text-muted-foreground">
-                          {formatPrice(item.price)} × {item.quantity}
+                          {formatPrice(cartItem.item.price)} × {cartItem.quantity}
                         </p>
                       </div>
                       
@@ -183,15 +248,15 @@ export default function CartPage() {
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                            onClick={() => handleUpdateQuantity(cartItem.item.id, cartItem.quantity - 1)}
                           >
                             <Minus className="h-3 w-3" />
                           </Button>
-                          <span className="w-8 text-center text-sm">{item.quantity}</span>
+                          <span className="w-8 text-center text-sm">{cartItem.quantity}</span>
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                            onClick={() => handleUpdateQuantity(cartItem.item.id, cartItem.quantity + 1)}
                           >
                             <Plus className="h-3 w-3" />
                           </Button>
@@ -200,7 +265,7 @@ export default function CartPage() {
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => removeItem(item.id)}
+                          onClick={() => handleRemoveItem(cartItem.item.id)}
                           className="text-destructive hover:text-destructive"
                         >
                           <Trash2 className="h-4 w-4" />
@@ -210,7 +275,7 @@ export default function CartPage() {
                     
                     <div className="text-right mt-1">
                       <span className="font-medium">
-                        {formatPrice(item.price * item.quantity)}
+                        {formatPrice(cartItem.item.price * cartItem.quantity)}
                       </span>
                     </div>
                     

@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useParams } from 'next/navigation'
 import { supabase, type MenuCategory, type MenuItem } from '@/lib/supabase'
+import { useCart } from '@/contexts/CartContext'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -11,18 +12,20 @@ import { ShoppingCart, Plus, Minus, UtensilsCrossed, Clock, Heart } from 'lucide
 import { toast } from 'sonner'
 import Image from 'next/image'
 
-interface CartItem {
-  item: MenuItem
-  quantity: number
-}
-
 export default function MenuPage() {
   const params = useParams()
   const tableId = params.id as string
+  const { 
+    cart, 
+    addToCart, 
+    removeFromCart, 
+    getCartItemQuantity, 
+    getTotalAmount, 
+    getTotalItems 
+  } = useCart()
   
   const [categories, setCategories] = useState<MenuCategory[]>([])
   const [menuItems, setMenuItems] = useState<MenuItem[]>([])
-  const [cart, setCart] = useState<CartItem[]>([])
   const [loading, setLoading] = useState(true)
   const [activeCategory, setActiveCategory] = useState('')
 
@@ -62,50 +65,9 @@ export default function MenuPage() {
     fetchMenuData()
   }, [])
 
-  const addToCart = (item: MenuItem) => {
-    setCart(prevCart => {
-      const existingItem = prevCart.find(cartItem => cartItem.item.id === item.id)
-      if (existingItem) {
-        return prevCart.map(cartItem =>
-          cartItem.item.id === item.id
-            ? { ...cartItem, quantity: cartItem.quantity + 1 }
-            : cartItem
-        )
-      } else {
-        return [...prevCart, { item, quantity: 1 }]
-      }
-    })
+  const handleAddToCart = (item: MenuItem) => {
+    addToCart(item)
     toast.success(`${item.name} をカートに追加しました`)
-  }
-
-  const removeFromCart = (itemId: string) => {
-    setCart(prevCart => {
-      return prevCart.reduce((acc, cartItem) => {
-        if (cartItem.item.id === itemId) {
-          if (cartItem.quantity > 1) {
-            acc.push({ ...cartItem, quantity: cartItem.quantity - 1 })
-          }
-        } else {
-          acc.push(cartItem)
-        }
-        return acc
-      }, [] as CartItem[])
-    })
-  }
-
-  const getCartItemQuantity = (itemId: string) => {
-    const cartItem = cart.find(item => item.item.id === itemId)
-    return cartItem ? cartItem.quantity : 0
-  }
-
-  const getTotalAmount = () => {
-    return cart.reduce((total, cartItem) => {
-      return total + (cartItem.item.price * cartItem.quantity)
-    }, 0)
-  }
-
-  const getTotalItems = () => {
-    return cart.reduce((total, cartItem) => total + cartItem.quantity, 0)
   }
 
   const getCategoryItems = (categoryId: string) => {
@@ -245,7 +207,7 @@ export default function MenuPage() {
                       <div className="flex items-center justify-between">
                         {getCartItemQuantity(item.id) === 0 ? (
                           <Button
-                            onClick={() => addToCart(item)}
+                            onClick={() => handleAddToCart(item)}
                             className="w-full"
                           >
                             <Plus className="h-4 w-4 mr-2" />
@@ -265,7 +227,7 @@ export default function MenuPage() {
                               {getCartItemQuantity(item.id)}
                             </span>
                             <Button
-                              onClick={() => addToCart(item)}
+                              onClick={() => handleAddToCart(item)}
                               variant="outline"
                               size="sm"
                               className="flex-shrink-0"
