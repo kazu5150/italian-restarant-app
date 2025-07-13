@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { supabase, type Table } from '@/lib/supabase'
+import AdminLayout from '@/components/admin/AdminLayout'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -209,76 +210,77 @@ export default function AdminTablesPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <div className="border-b">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <Button variant="ghost" size="sm" asChild>
-                <Link href="/admin">
-                  <ArrowLeft className="h-4 w-4 mr-2" />
-                  ダッシュボード
-                </Link>
-              </Button>
-              <div>
-                <h1 className="text-2xl font-bold">テーブル管理</h1>
-                <p className="text-sm text-muted-foreground">
-                  テーブル設定とQRコード管理
-                </p>
+    <AdminLayout>
+      <div className="min-h-screen bg-background">
+        {/* Header */}
+        <div className="border-b">
+          <div className="container mx-auto px-4 py-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <Button variant="ghost" size="sm" asChild>
+                  <Link href="/admin">
+                    <ArrowLeft className="h-4 w-4 mr-2" />
+                    ダッシュボード
+                  </Link>
+                </Button>
+                <div>
+                  <h1 className="text-2xl font-bold">テーブル管理</h1>
+                  <p className="text-sm text-muted-foreground">
+                    テーブル設定とQRコード管理
+                  </p>
+                </div>
               </div>
-            </div>
-            
-            <div className="flex gap-2">
-              <Button variant="outline" size="sm" onClick={downloadAllQRCodes}>
-                <Download className="h-4 w-4 mr-2" />
-                全QRダウンロード
-              </Button>
-              <Button variant="outline" size="sm" onClick={printAllQRCodes}>
-                <Printer className="h-4 w-4 mr-2" />
-                全QR印刷
-              </Button>
-              <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
-                <DialogTrigger asChild>
-                  <Button size="sm">
-                    <Plus className="h-4 w-4 mr-2" />
-                    テーブル追加
-                  </Button>
-                </DialogTrigger>
-                <DialogContent>
-                  <DialogHeader>
-                    <DialogTitle>新しいテーブルを追加</DialogTitle>
-                    <DialogDescription>
-                      テーブル番号を入力してください。QRコードが自動生成されます。
-                    </DialogDescription>
-                  </DialogHeader>
-                  <div className="space-y-4">
-                    <div>
-                      <Label htmlFor="table-number">テーブル番号</Label>
-                      <Input
-                        id="table-number"
-                        type="number"
-                        placeholder="例: 10"
-                        value={newTableNumber}
-                        onChange={(e) => setNewTableNumber(e.target.value)}
-                        min="1"
-                      />
-                    </div>
-                  </div>
-                  <DialogFooter>
-                    <Button variant="outline" onClick={() => setShowAddDialog(false)}>
-                      キャンセル
+              
+              <div className="flex gap-2">
+                <Button variant="outline" size="sm" onClick={downloadAllQRCodes}>
+                  <Download className="h-4 w-4 mr-2" />
+                  全QRダウンロード
+                </Button>
+                <Button variant="outline" size="sm" onClick={printAllQRCodes}>
+                  <Printer className="h-4 w-4 mr-2" />
+                  全QR印刷
+                </Button>
+                <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
+                  <DialogTrigger asChild>
+                    <Button size="sm">
+                      <Plus className="h-4 w-4 mr-2" />
+                      テーブル追加
                     </Button>
-                    <Button onClick={addTable}>追加</Button>
-                  </DialogFooter>
-                </DialogContent>
-              </Dialog>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>新しいテーブルを追加</DialogTitle>
+                      <DialogDescription>
+                        テーブル番号を入力してください。QRコードが自動生成されます。
+                      </DialogDescription>
+                    </DialogHeader>
+                    <div className="space-y-4">
+                      <div>
+                        <Label htmlFor="table-number">テーブル番号</Label>
+                        <Input
+                          id="table-number"
+                          type="number"
+                          placeholder="例: 10"
+                          value={newTableNumber}
+                          onChange={(e) => setNewTableNumber(e.target.value)}
+                          min="1"
+                        />
+                      </div>
+                    </div>
+                    <DialogFooter>
+                      <Button variant="outline" onClick={() => setShowAddDialog(false)}>
+                        キャンセル
+                      </Button>
+                      <Button onClick={addTable}>追加</Button>
+                    </DialogFooter>
+                  </DialogContent>
+                </Dialog>
+              </div>
             </div>
           </div>
         </div>
-      </div>
 
-      <div className="container mx-auto px-4 py-6">
+        <div className="container mx-auto px-4 py-6">
         {tables.length === 0 ? (
           <Card>
             <CardContent className="pt-6">
@@ -362,7 +364,8 @@ export default function AdminTablesPage() {
             ))}
           </div>
         )}
+        </div>
       </div>
-    </div>
+    </AdminLayout>
   )
 }

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { supabase, type MenuCategory, type MenuItem } from '@/lib/supabase'
+import AdminLayout from '@/components/admin/AdminLayout'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -10,44 +11,46 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { 
+  UtensilsCrossed, 
+  Plus, 
+  Edit, 
+  Trash2, 
   ArrowLeft,
-  Plus,
-  Edit,
-  Trash2,
-  UtensilsCrossed,
   Upload,
-  Image as ImageIcon
+  Eye,
+  EyeOff
 } from 'lucide-react'
 import { toast } from 'sonner'
 import Link from 'next/link'
-import Image from 'next/image'
-
-interface MenuItemForm {
-  name: string
-  description: string
-  price: string
-  category_id: string
-  image_url: string
-  is_available: boolean
-  allergens: string[]
-}
+import {
+  menuCategoriesAdmin,
+  menuItemsAdmin
+} from '@/lib/supabase-admin'
 
 export default function AdminMenuPage() {
   const [categories, setCategories] = useState<MenuCategory[]>([])
   const [menuItems, setMenuItems] = useState<MenuItem[]>([])
   const [loading, setLoading] = useState(true)
   const [showAddDialog, setShowAddDialog] = useState(false)
+  const [showEditDialog, setShowEditDialog] = useState(false)
   const [editingItem, setEditingItem] = useState<MenuItem | null>(null)
-  const [formData, setFormData] = useState<MenuItemForm>({
+  const [showCategoryDialog, setShowCategoryDialog] = useState(false)
+  
+  const [newItem, setNewItem] = useState({
     name: '',
     description: '',
     price: '',
     category_id: '',
     image_url: '',
     is_available: true,
-    allergens: []
+    allergens: [] as string[]
+  })
+  
+  const [newCategory, setNewCategory] = useState({
+    name: '',
+    description: ''
   })
 
   useEffect(() => {
@@ -56,146 +59,18 @@ export default function AdminMenuPage() {
 
   const fetchData = async () => {
     try {
-      const [categoriesResponse, itemsResponse] = await Promise.all([
-        supabase.from('menu_categories').select('*').order('display_order'),
-        supabase.from('menu_items').select('*, menu_categories(name)').order('created_at', { ascending: false })
+      const [categoriesData, itemsData] = await Promise.all([
+        menuCategoriesAdmin.getAll(),
+        menuItemsAdmin.getAll()
       ])
-
-      if (categoriesResponse.error) throw categoriesResponse.error
-      if (itemsResponse.error) throw itemsResponse.error
-
-      setCategories(categoriesResponse.data || [])
-      setMenuItems(itemsResponse.data || [])
+      
+      setCategories(categoriesData)
+      setMenuItems(itemsData)
     } catch (error) {
       console.error('Error fetching data:', error)
       toast.error('データの取得に失敗しました')
     } finally {
       setLoading(false)
-    }
-  }
-
-  const resetForm = () => {
-    setFormData({
-      name: '',
-      description: '',
-      price: '',
-      category_id: '',
-      image_url: '',
-      is_available: true,
-      allergens: []
-    })
-    setEditingItem(null)
-  }
-
-  const handleAddItem = async () => {
-    if (!formData.name || !formData.price || !formData.category_id) {
-      toast.error('必須項目を入力してください')
-      return
-    }
-
-    try {
-      const { error } = await supabase
-        .from('menu_items')
-        .insert({
-          name: formData.name,
-          description: formData.description,
-          price: parseFloat(formData.price),
-          category_id: formData.category_id,
-          image_url: formData.image_url || null,
-          is_available: formData.is_available,
-          allergens: formData.allergens
-        })
-
-      if (error) throw error
-
-      toast.success('メニューアイテムを追加しました')
-      setShowAddDialog(false)
-      resetForm()
-      fetchData()
-    } catch (error) {
-      console.error('Error adding item:', error)
-      toast.error('追加に失敗しました')
-    }
-  }
-
-  const handleEditItem = (item: MenuItem) => {
-    setEditingItem(item)
-    setFormData({
-      name: item.name,
-      description: item.description || '',
-      price: item.price.toString(),
-      category_id: item.category_id,
-      image_url: item.image_url || '',
-      is_available: item.is_available,
-      allergens: item.allergens || []
-    })
-    setShowAddDialog(true)
-  }
-
-  const handleUpdateItem = async () => {
-    if (!editingItem) return
-
-    try {
-      const { error } = await supabase
-        .from('menu_items')
-        .update({
-          name: formData.name,
-          description: formData.description,
-          price: parseFloat(formData.price),
-          category_id: formData.category_id,
-          image_url: formData.image_url || null,
-          is_available: formData.is_available,
-          allergens: formData.allergens
-        })
-        .eq('id', editingItem.id)
-
-      if (error) throw error
-
-      toast.success('メニューアイテムを更新しました')
-      setShowAddDialog(false)
-      resetForm()
-      fetchData()
-    } catch (error) {
-      console.error('Error updating item:', error)
-      toast.error('更新に失敗しました')
-    }
-  }
-
-  const handleDeleteItem = async (itemId: string) => {
-    if (!confirm('このメニューアイテムを削除してもよろしいですか？')) {
-      return
-    }
-
-    try {
-      const { error } = await supabase
-        .from('menu_items')
-        .delete()
-        .eq('id', itemId)
-
-      if (error) throw error
-
-      toast.success('メニューアイテムを削除しました')
-      fetchData()
-    } catch (error) {
-      console.error('Error deleting item:', error)
-      toast.error('削除に失敗しました')
-    }
-  }
-
-  const toggleAvailability = async (itemId: string, isAvailable: boolean) => {
-    try {
-      const { error } = await supabase
-        .from('menu_items')
-        .update({ is_available: !isAvailable })
-        .eq('id', itemId)
-
-      if (error) throw error
-
-      toast.success('在庫状況を更新しました')
-      fetchData()
-    } catch (error) {
-      console.error('Error updating availability:', error)
-      toast.error('更新に失敗しました')
     }
   }
 
@@ -206,6 +81,143 @@ export default function AdminMenuPage() {
   const getCategoryName = (categoryId: string) => {
     const category = categories.find(cat => cat.id === categoryId)
     return category?.name || 'Unknown'
+  }
+  
+  const handleAddItem = async () => {
+    if (!newItem.name.trim() || !newItem.price || !newItem.category_id) {
+      toast.error('必須項目を入力してください')
+      return
+    }
+    
+    const price = parseFloat(newItem.price)
+    if (isNaN(price) || price <= 0) {
+      toast.error('有効な価格を入力してください')
+      return
+    }
+    
+    try {
+      await menuItemsAdmin.create({
+        name: newItem.name,
+        description: newItem.description || undefined,
+        price: price,
+        category_id: newItem.category_id,
+        image_url: newItem.image_url || undefined,
+        is_available: newItem.is_available,
+        allergens: newItem.allergens
+      })
+      
+      setNewItem({
+        name: '',
+        description: '',
+        price: '',
+        category_id: '',
+        image_url: '',
+        is_available: true,
+        allergens: []
+      })
+      setShowAddDialog(false)
+      fetchData()
+    } catch (error) {
+      // エラーはsupabase-admin.tsで処理済み
+    }
+  }
+  
+  const handleEditItem = async () => {
+    if (!editingItem || !newItem.name.trim() || !newItem.price || !newItem.category_id) {
+      toast.error('必須項目を入力してください')
+      return
+    }
+    
+    const price = parseFloat(newItem.price)
+    if (isNaN(price) || price <= 0) {
+      toast.error('有効な価格を入力してください')
+      return
+    }
+    
+    try {
+      await menuItemsAdmin.update(editingItem.id, {
+        name: newItem.name,
+        description: newItem.description || undefined,
+        price: price,
+        category_id: newItem.category_id,
+        image_url: newItem.image_url || undefined,
+        is_available: newItem.is_available,
+        allergens: newItem.allergens
+      })
+      
+      setShowEditDialog(false)
+      setEditingItem(null)
+      fetchData()
+    } catch (error) {
+      // エラーはsupabase-admin.tsで処理済み
+    }
+  }
+  
+  const handleDeleteItem = async (itemId: string) => {
+    if (!confirm('このメニューアイテムを削除しますか？')) return
+    
+    try {
+      await menuItemsAdmin.delete(itemId)
+      fetchData()
+    } catch (error) {
+      // エラーはsupabase-admin.tsで処理済み
+    }
+  }
+  
+  const handleToggleAvailability = async (itemId: string) => {
+    try {
+      await menuItemsAdmin.toggleAvailability(itemId)
+      fetchData()
+    } catch (error) {
+      // エラーはsupabase-admin.tsで処理済み
+    }
+  }
+  
+  const handleAddCategory = async () => {
+    if (!newCategory.name.trim()) {
+      toast.error('カテゴリ名を入力してください')
+      return
+    }
+    
+    try {
+      await menuCategoriesAdmin.create({
+        name: newCategory.name,
+        description: newCategory.description,
+        display_order: categories.length + 1
+      })
+      
+      setNewCategory({ name: '', description: '' })
+      setShowCategoryDialog(false)
+      fetchData()
+    } catch (error) {
+      // エラーはsupabase-admin.tsで処理済み
+    }
+  }
+  
+  const openEditDialog = (item: MenuItem) => {
+    setEditingItem(item)
+    setNewItem({
+      name: item.name,
+      description: item.description || '',
+      price: item.price.toString(),
+      category_id: item.category_id,
+      image_url: item.image_url || '',
+      is_available: item.is_available,
+      allergens: item.allergens || []
+    })
+    setShowEditDialog(true)
+  }
+  
+  const resetNewItem = () => {
+    setNewItem({
+      name: '',
+      description: '',
+      price: '',
+      category_id: '',
+      image_url: '',
+      is_available: true,
+      allergens: []
+    })
   }
 
   if (loading) {
@@ -220,253 +232,370 @@ export default function AdminMenuPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <div className="border-b">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <Button variant="ghost" size="sm" asChild>
-                <Link href="/admin">
-                  <ArrowLeft className="h-4 w-4 mr-2" />
-                  ダッシュボード
-                </Link>
-              </Button>
-              <div>
-                <h1 className="text-2xl font-bold">メニュー管理</h1>
-                <p className="text-sm text-muted-foreground">
-                  メニューアイテムの追加・編集・管理
-                </p>
+    <AdminLayout>
+      <div className="min-h-screen bg-background">
+        {/* Header */}
+        <div className="border-b">
+          <div className="container mx-auto px-4 py-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <Button variant="ghost" size="sm" asChild>
+                  <Link href="/admin">
+                    <ArrowLeft className="h-4 w-4 mr-2" />
+                    ダッシュボード
+                  </Link>
+                </Button>
+                <div>
+                  <h1 className="text-2xl font-bold">メニュー管理</h1>
+                  <p className="text-sm text-muted-foreground">メニューアイテムとカテゴリの管理</p>
+                </div>
               </div>
-            </div>
-            
-            <Dialog open={showAddDialog} onOpenChange={(open) => {
-              setShowAddDialog(open)
-              if (!open) resetForm()
-            }}>
-              <DialogTrigger asChild>
-                <Button>
+              <div className="flex gap-2">
+                <Button variant="outline" onClick={() => setShowCategoryDialog(true)}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  カテゴリ追加
+                </Button>
+                <Button onClick={() => { resetNewItem(); setShowAddDialog(true); }}>
                   <Plus className="h-4 w-4 mr-2" />
                   メニュー追加
                 </Button>
-              </DialogTrigger>
-              <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-                <DialogHeader>
-                  <DialogTitle>
-                    {editingItem ? 'メニューアイテム編集' : '新しいメニューアイテム'}
-                  </DialogTitle>
-                  <DialogDescription>
-                    メニューアイテムの詳細を入力してください
-                  </DialogDescription>
-                </DialogHeader>
-                
-                <div className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <Label htmlFor="name">料理名 *</Label>
-                      <Input
-                        id="name"
-                        value={formData.name}
-                        onChange={(e) => setFormData({...formData, name: e.target.value})}
-                        placeholder="例: マルゲリータピザ"
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="price">価格 (円) *</Label>
-                      <Input
-                        id="price"
-                        type="number"
-                        value={formData.price}
-                        onChange={(e) => setFormData({...formData, price: e.target.value})}
-                        placeholder="1500"
-                      />
-                    </div>
-                  </div>
-                  
-                  <div>
-                    <Label htmlFor="category">カテゴリ *</Label>
-                    <Select
-                      value={formData.category_id}
-                      onValueChange={(value) => setFormData({...formData, category_id: value})}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="カテゴリを選択" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {categories.map((category) => (
-                          <SelectItem key={category.id} value={category.id}>
-                            {category.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  
-                  <div>
-                    <Label htmlFor="description">説明</Label>
-                    <Textarea
-                      id="description"
-                      value={formData.description}
-                      onChange={(e) => setFormData({...formData, description: e.target.value})}
-                      placeholder="料理の説明を入力..."
-                      rows={3}
-                    />
-                  </div>
-                  
-                  <div>
-                    <Label htmlFor="image_url">画像URL</Label>
-                    <div className="space-y-2">
-                      <Input
-                        id="image_url"
-                        value={formData.image_url}
-                        onChange={(e) => setFormData({...formData, image_url: e.target.value})}
-                        placeholder="/images/menu/pizza/margherita.jpg"
-                      />
-                      <p className="text-xs text-muted-foreground">
-                        画像ファイルを public/images/menu/ に配置し、相対パスを入力してください
-                      </p>
-                      {formData.image_url && (
-                        <div className="relative w-32 h-24 border rounded overflow-hidden">
-                          <Image
-                            src={formData.image_url}
-                            alt="Preview"
-                            fill
-                            className="object-cover"
-                            onError={() => toast.error('画像の読み込みに失敗しました')}
-                          />
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                  
-                  <div>
-                    <Label htmlFor="allergens">アレルギー情報</Label>
-                    <Input
-                      id="allergens"
-                      value={formData.allergens.join(', ')}
-                      onChange={(e) => setFormData({
-                        ...formData, 
-                        allergens: e.target.value.split(',').map(s => s.trim()).filter(s => s)
-                      })}
-                      placeholder="gluten, dairy, eggs (カンマ区切り)"
-                    />
-                  </div>
-                </div>
-                
-                <DialogFooter>
-                  <Button variant="outline" onClick={() => setShowAddDialog(false)}>
-                    キャンセル
-                  </Button>
-                  <Button onClick={editingItem ? handleUpdateItem : handleAddItem}>
-                    {editingItem ? '更新' : '追加'}
-                  </Button>
-                </DialogFooter>
-              </DialogContent>
-            </Dialog>
+              </div>
+            </div>
           </div>
         </div>
-      </div>
 
-      <div className="container mx-auto px-4 py-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>メニューアイテム一覧</CardTitle>
-            <CardDescription>
-              {menuItems.length} 件のメニューアイテム
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="w-16">画像</TableHead>
-                    <TableHead>料理名</TableHead>
-                    <TableHead>カテゴリ</TableHead>
-                    <TableHead>価格</TableHead>
-                    <TableHead>状態</TableHead>
-                    <TableHead className="w-32">操作</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {menuItems.map((item) => (
-                    <TableRow key={item.id}>
-                      <TableCell>
-                        <div className="w-12 h-12 bg-muted rounded overflow-hidden">
-                          {item.image_url ? (
-                            <Image
-                              src={item.image_url}
-                              alt={item.name}
-                              width={48}
-                              height={48}
-                              className="object-cover w-full h-full"
-                            />
-                          ) : (
-                            <div className="flex items-center justify-center h-full">
-                              <ImageIcon className="h-4 w-4 text-muted-foreground" />
+        <div className="container mx-auto px-4 py-6">
+          <Tabs defaultValue="menu-items" className="space-y-6">
+            <TabsList>
+              <TabsTrigger value="menu-items">メニューアイテム</TabsTrigger>
+              <TabsTrigger value="categories">カテゴリ管理</TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="menu-items" className="space-y-4">
+              <Card>
+                <CardHeader>
+                  <CardTitle>メニューアイテム一覧</CardTitle>
+                  <CardDescription>
+                    {menuItems.length} 件のメニューアイテム
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {menuItems.length === 0 ? (
+                    <div className="text-center py-8">
+                      <UtensilsCrossed className="h-8 w-8 mx-auto mb-4 text-muted-foreground" />
+                      <p className="text-muted-foreground mb-4">メニューアイテムがありません</p>
+                      <Button onClick={() => { resetNewItem(); setShowAddDialog(true); }}>
+                        <Plus className="h-4 w-4 mr-2" />
+                        最初のメニューを追加
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {menuItems.map((item) => (
+                        <Card key={item.id} className="overflow-hidden">
+                          <CardHeader className="pb-3">
+                            <div className="flex items-start justify-between">
+                              <div>
+                                <CardTitle className="text-lg">{item.name}</CardTitle>
+                                <p className="text-sm text-muted-foreground">
+                                  {getCategoryName(item.category_id)}
+                                </p>
+                              </div>
+                              <div className="flex gap-1">
+                                <Badge variant={item.is_available ? "default" : "secondary"}>
+                                  {item.is_available ? "販売中" : "販売停止"}
+                                </Badge>
+                              </div>
                             </div>
-                          )}
-                        </div>
-                      </TableCell>
-                      <TableCell>
+                            {item.description && (
+                              <p className="text-sm text-muted-foreground">
+                                {item.description}
+                              </p>
+                            )}
+                          </CardHeader>
+                          <CardContent>
+                            <div className="space-y-3">
+                              <div className="flex items-center justify-between">
+                                <span className="text-lg font-bold text-primary">
+                                  {formatPrice(item.price)}
+                                </span>
+                              </div>
+                              <div className="flex gap-2">
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => openEditDialog(item)}
+                                  className="flex-1"
+                                >
+                                  <Edit className="h-4 w-4 mr-1" />
+                                  編集
+                                </Button>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => handleToggleAvailability(item.id)}
+                                >
+                                  {item.is_available ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                                </Button>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => handleDeleteItem(item.id)}
+                                  className="text-destructive hover:text-destructive"
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
+            
+            <TabsContent value="categories" className="space-y-4">
+              <Card>
+                <CardHeader>
+                  <CardTitle>カテゴリ一覧</CardTitle>
+                  <CardDescription>
+                    {categories.length} 件のカテゴリ
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2">
+                    {categories.map((category) => (
+                      <div
+                        key={category.id}
+                        className="flex items-center justify-between p-3 border rounded-lg"
+                      >
                         <div>
-                          <p className="font-medium">{item.name}</p>
-                          {item.description && (
-                            <p className="text-sm text-muted-foreground line-clamp-2">
-                              {item.description}
+                          <p className="font-medium">{category.name}</p>
+                          {category.description && (
+                            <p className="text-sm text-muted-foreground">
+                              {category.description}
                             </p>
                           )}
                         </div>
-                      </TableCell>
-                      <TableCell>{getCategoryName(item.category_id)}</TableCell>
-                      <TableCell className="font-mono">{formatPrice(item.price)}</TableCell>
-                      <TableCell>
-                        <Button
-                          variant={item.is_available ? "default" : "secondary"}
-                          size="sm"
-                          onClick={() => toggleAvailability(item.id, item.is_available)}
-                        >
-                          {item.is_available ? '在庫あり' : '在庫切れ'}
-                        </Button>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex gap-1">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleEditItem(item)}
-                          >
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleDeleteItem(item.id)}
-                            className="text-destructive hover:text-destructive"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
+                        <div className="text-sm text-muted-foreground">
+                          順序: {category.display_order}
                         </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-            
-            {menuItems.length === 0 && (
-              <div className="text-center py-8">
-                <UtensilsCrossed className="h-8 w-8 mx-auto mb-4 text-muted-foreground" />
-                <p className="text-muted-foreground mb-4">メニューアイテムがありません</p>
-                <Button onClick={() => setShowAddDialog(true)}>
-                  <Plus className="h-4 w-4 mr-2" />
-                  最初のメニューを追加
-                </Button>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+          </Tabs>
+        </div>
+        
+        {/* メニューアイテム追加ダイアログ */}
+        <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>新しいメニューアイテム</DialogTitle>
+              <DialogDescription>
+                メニューアイテムの詳細を入力してください
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="item-name">メニュー名 *</Label>
+                <Input
+                  id="item-name"
+                  value={newItem.name}
+                  onChange={(e) => setNewItem(prev => ({ ...prev, name: e.target.value }))}
+                  placeholder="例: マルゲリータピザ"
+                />
               </div>
-            )}
-          </CardContent>
-        </Card>
+              
+              <div className="space-y-2">
+                <Label htmlFor="item-category">カテゴリ *</Label>
+                <Select
+                  value={newItem.category_id}
+                  onValueChange={(value) => setNewItem(prev => ({ ...prev, category_id: value }))}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="カテゴリを選択" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {categories.map((category) => (
+                      <SelectItem key={category.id} value={category.id}>
+                        {category.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="item-price">価格 *</Label>
+                <Input
+                  id="item-price"
+                  type="number"
+                  value={newItem.price}
+                  onChange={(e) => setNewItem(prev => ({ ...prev, price: e.target.value }))}
+                  placeholder="1000"
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="item-description">説明</Label>
+                <Textarea
+                  id="item-description"
+                  value={newItem.description}
+                  onChange={(e) => setNewItem(prev => ({ ...prev, description: e.target.value }))}
+                  placeholder="メニューの説明を入力..."
+                  rows={3}
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="item-image">画像URL</Label>
+                <Input
+                  id="item-image"
+                  value={newItem.image_url}
+                  onChange={(e) => setNewItem(prev => ({ ...prev, image_url: e.target.value }))}
+                  placeholder="https://example.com/image.jpg"
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setShowAddDialog(false)}>
+                キャンセル
+              </Button>
+              <Button onClick={handleAddItem}>
+                追加
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+        
+        {/* メニューアイテム編集ダイアログ */}
+        <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>メニューアイテム編集</DialogTitle>
+              <DialogDescription>
+                メニューアイテムの詳細を編集してください
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="edit-item-name">メニュー名 *</Label>
+                <Input
+                  id="edit-item-name"
+                  value={newItem.name}
+                  onChange={(e) => setNewItem(prev => ({ ...prev, name: e.target.value }))}
+                  placeholder="例: マルゲリータピザ"
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="edit-item-category">カテゴリ *</Label>
+                <Select
+                  value={newItem.category_id}
+                  onValueChange={(value) => setNewItem(prev => ({ ...prev, category_id: value }))}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="カテゴリを選択" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {categories.map((category) => (
+                      <SelectItem key={category.id} value={category.id}>
+                        {category.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="edit-item-price">価格 *</Label>
+                <Input
+                  id="edit-item-price"
+                  type="number"
+                  value={newItem.price}
+                  onChange={(e) => setNewItem(prev => ({ ...prev, price: e.target.value }))}
+                  placeholder="1000"
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="edit-item-description">説明</Label>
+                <Textarea
+                  id="edit-item-description"
+                  value={newItem.description}
+                  onChange={(e) => setNewItem(prev => ({ ...prev, description: e.target.value }))}
+                  placeholder="メニューの説明を入力..."
+                  rows={3}
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="edit-item-image">画像URL</Label>
+                <Input
+                  id="edit-item-image"
+                  value={newItem.image_url}
+                  onChange={(e) => setNewItem(prev => ({ ...prev, image_url: e.target.value }))}
+                  placeholder="https://example.com/image.jpg"
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setShowEditDialog(false)}>
+                キャンセル
+              </Button>
+              <Button onClick={handleEditItem}>
+                更新
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+        
+        {/* カテゴリ追加ダイアログ */}
+        <Dialog open={showCategoryDialog} onOpenChange={setShowCategoryDialog}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>新しいカテゴリ</DialogTitle>
+              <DialogDescription>
+                新しいメニューカテゴリを追加します
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="category-name">カテゴリ名 *</Label>
+                <Input
+                  id="category-name"
+                  value={newCategory.name}
+                  onChange={(e) => setNewCategory(prev => ({ ...prev, name: e.target.value }))}
+                  placeholder="例: 季節限定メニュー"
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="category-description">説明</Label>
+                <Input
+                  id="category-description"
+                  value={newCategory.description}
+                  onChange={(e) => setNewCategory(prev => ({ ...prev, description: e.target.value }))}
+                  placeholder="カテゴリの説明を入力..."
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setShowCategoryDialog(false)}>
+                キャンセル
+              </Button>
+              <Button onClick={handleAddCategory}>
+                追加
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
-    </div>
+    </AdminLayout>
   )
 }

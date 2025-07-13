@@ -2,10 +2,10 @@
 
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
+import AdminLayout from '@/components/admin/AdminLayout'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { 
   Users, 
   ShoppingCart, 
@@ -14,7 +14,9 @@ import {
   Clock,
   ChefHat,
   CheckCircle,
-  UtensilsCrossed
+  UtensilsCrossed,
+  RefreshCw,
+  AlertCircle
 } from 'lucide-react'
 import Link from 'next/link'
 
@@ -158,36 +160,48 @@ export default function AdminDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <div className="border-b">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <UtensilsCrossed className="h-6 w-6 text-primary" />
-              <div>
-                <h1 className="text-2xl font-bold">Bella Vista</h1>
-                <p className="text-sm text-muted-foreground">管理画面</p>
-              </div>
-            </div>
-            
-            <div className="flex gap-2">
-              <Button variant="outline" size="sm" asChild>
-                <Link href="/admin/orders">注文管理</Link>
-              </Button>
-              <Button variant="outline" size="sm" asChild>
-                <Link href="/admin/menu">メニュー管理</Link>
-              </Button>
-              <Button variant="outline" size="sm" asChild>
-                <Link href="/admin/tables">テーブル管理</Link>
-              </Button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div className="container mx-auto px-4 py-6">
+    <AdminLayout>
+      <div className="p-6">
         <div className="space-y-6">
+          {/* Quick Actions Header */}
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-lg font-medium">ダッシュボード概要</h3>
+              <p className="text-sm text-muted-foreground">
+                最終更新: {new Date().toLocaleTimeString('ja-JP')}
+              </p>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => fetchDashboardData()}
+              disabled={loading}
+            >
+              <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+              更新
+            </Button>
+          </div>
+
+          {/* Alert Section */}
+          {(stats.pendingOrders > 5 || stats.readyOrders > 3) && (
+            <Card className="border-orange-200 bg-orange-50">
+              <CardContent className="p-4">
+                <div className="flex items-center gap-3">
+                  <AlertCircle className="h-5 w-5 text-orange-600" />
+                  <div>
+                    <p className="font-medium text-orange-800">注意が必要です</p>
+                    <p className="text-sm text-orange-700">
+                      {stats.pendingOrders > 5 && `${stats.pendingOrders}件の注文が受付待ちです。`}
+                      {stats.readyOrders > 3 && ` ${stats.readyOrders}件の料理が配膳待ちです。`}
+                    </p>
+                  </div>
+                  <Button size="sm" variant="outline" asChild className="ml-auto">
+                    <Link href="/admin/orders">対応する</Link>
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          )}
           {/* Stats Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <Card>
@@ -365,6 +379,6 @@ export default function AdminDashboard() {
           </Card>
         </div>
       </div>
-    </div>
+    </AdminLayout>
   )
 }

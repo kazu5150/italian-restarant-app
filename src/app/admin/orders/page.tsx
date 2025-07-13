@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { supabase, type Order } from '@/lib/supabase'
+import AdminLayout from '@/components/admin/AdminLayout'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -202,24 +203,16 @@ export default function AdminOrdersPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <div className="border-b">
-        <div className="container mx-auto px-4 py-4">
+    <AdminLayout>
+      <div className="p-6">
+        <div className="space-y-6">
+          {/* Header */}
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <Button variant="ghost" size="sm" asChild>
-                <Link href="/admin">
-                  <ArrowLeft className="h-4 w-4 mr-2" />
-                  ダッシュボード
-                </Link>
-              </Button>
-              <div>
-                <h1 className="text-2xl font-bold">注文管理</h1>
-                <p className="text-sm text-muted-foreground">
-                  リアルタイム注文状況
-                </p>
-              </div>
+            <div>
+              <h3 className="text-lg font-medium">注文管理</h3>
+              <p className="text-sm text-muted-foreground">
+                リアルタイム注文状況の管理
+              </p>
             </div>
             
             <Button
@@ -232,10 +225,6 @@ export default function AdminOrdersPage() {
               更新
             </Button>
           </div>
-        </div>
-      </div>
-
-      <div className="container mx-auto px-4 py-6">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="all" className="relative">
@@ -352,7 +341,8 @@ export default function AdminOrdersPage() {
             )}
           </TabsContent>
         </Tabs>
+        </div>
       </div>
-    </div>
+    </AdminLayout>
   )
 }
