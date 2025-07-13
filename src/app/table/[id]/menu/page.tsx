@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { ShoppingCart, Plus, Minus, UtensilsCrossed, Clock, Heart, Receipt, ChefHat } from 'lucide-react'
+import { ShoppingCart, Plus, Minus, UtensilsCrossed, Heart, Receipt, ChefHat } from 'lucide-react'
 import { toast } from 'sonner'
 import Image from 'next/image'
 import { formatPrice } from '@/lib/utils'
@@ -29,7 +29,7 @@ export default function MenuPage() {
   const [menuItems, setMenuItems] = useState<MenuItem[]>([])
   const [loading, setLoading] = useState(true)
   const [activeCategory, setActiveCategory] = useState('')
-  const [currentOrders, setCurrentOrders] = useState<any[]>([])
+  const [currentOrders, setCurrentOrders] = useState<{id: string, status: string, total_amount: number, created_at: string, special_requests?: string, order_items: {menu_items: {name: string}[], quantity: number, unit_price: number}[]}[]>([])
   const [loadingOrders, setLoadingOrders] = useState(false)
 
   useEffect(() => {
@@ -57,8 +57,7 @@ export default function MenuPage() {
         if (categoriesData && categoriesData.length > 0) {
           setActiveCategory(categoriesData[0].id)
         }
-      } catch (error) {
-        console.error('Error fetching menu data:', error)
+      } catch {
         toast.error('メニューの読み込みに失敗しました')
       } finally {
         setLoading(false)
@@ -120,8 +119,7 @@ export default function MenuPage() {
       } else {
         toast.success(`${ordersData.length}件の注文を確認しました`)
       }
-    } catch (error) {
-      console.error('Error fetching orders:', error)
+    } catch {
       toast.error('注文情報の取得に失敗しました')
     } finally {
       setLoadingOrders(false)
@@ -270,9 +268,9 @@ export default function MenuPage() {
                     </div>
                     
                     <div className="space-y-1 mb-3">
-                      {order.order_items.map((item: any, index: number) => (
+                      {order.order_items.map((item: {menu_items: {name: string}[], quantity: number, unit_price: number}, index: number) => (
                         <div key={index} className="flex justify-between text-sm">
-                          <span>{item.menu_items.name} × {item.quantity}</span>
+                          <span>{item.menu_items[0]?.name} × {item.quantity}</span>
                           <span>¥{(item.unit_price * item.quantity).toLocaleString()}</span>
                         </div>
                       ))}

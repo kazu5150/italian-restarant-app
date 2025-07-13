@@ -1,7 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { supabase } from '@/lib/supabase'
+import { useState } from 'react'
 import AdminLayout from '@/components/admin/AdminLayout'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -13,13 +12,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Separator } from '@/components/ui/separator'
 import { Badge } from '@/components/ui/badge'
 import { 
-  Settings,
   Store,
   Users,
   Bell,
-  Shield,
   Database,
-  Palette,
   Clock,
   Wifi,
   Save,
@@ -91,7 +87,7 @@ export default function AdminSettings() {
     sunday: '日曜日'
   }
 
-  const handleSettingChange = (key: string, value: any) => {
+  const handleSettingChange = (key: string, value: string | number | boolean) => {
     setSettings(prev => ({
       ...prev,
       [key]: value
@@ -99,7 +95,7 @@ export default function AdminSettings() {
     setHasChanges(true)
   }
 
-  const handleOpeningHoursChange = (day: string, field: string, value: any) => {
+  const handleOpeningHoursChange = (day: string, field: string, value: string | boolean) => {
     setSettings(prev => ({
       ...prev,
       openingHours: {
@@ -122,8 +118,7 @@ export default function AdminSettings() {
       
       toast.success('設定を保存しました')
       setHasChanges(false)
-    } catch (error) {
-      console.error('Error saving settings:', error)
+    } catch {
       toast.error('設定の保存に失敗しました')
     } finally {
       setLoading(false)

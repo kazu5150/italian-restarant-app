@@ -1,12 +1,11 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { useCart } from '@/contexts/CartContext'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Separator } from '@/components/ui/separator'
@@ -60,7 +59,6 @@ export default function CartPage() {
         .single()
       
       if (tableError && tableError.code !== 'PGRST116') { // PGRST116 = no rows found
-        console.error('Table lookup error:', tableError)
         throw new Error('テーブル情報の取得に失敗しました')
       }
       
@@ -79,7 +77,6 @@ export default function CartPage() {
           .single()
         
         if (createTableError) {
-          console.error('Table creation error:', createTableError)
           throw new Error('テーブルの作成に失敗しました')
         }
         
@@ -102,13 +99,6 @@ export default function CartPage() {
         .single()
 
       if (orderError) {
-        console.error('Order creation error details:', {
-          error: orderError,
-          message: orderError.message,
-          details: orderError.details,
-          hint: orderError.hint,
-          code: orderError.code
-        })
         throw orderError
       }
 
@@ -127,13 +117,6 @@ export default function CartPage() {
         .insert(orderItems)
 
       if (itemsError) {
-        console.error('Order items creation error details:', {
-          error: itemsError,
-          message: itemsError.message,
-          details: itemsError.details,
-          hint: itemsError.hint,
-          code: itemsError.code
-        })
         throw itemsError
       }
 
@@ -144,9 +127,6 @@ export default function CartPage() {
       router.push(`/table/${tableId}/order/${newOrder.id}`)
       
     } catch (error) {
-      console.error('Error submitting order - Full error object:', error)
-      console.error('Error as JSON:', JSON.stringify(error, null, 2))
-      
       // More detailed error message
       let errorMessage = '注文の送信に失敗しました'
       if (error && typeof error === 'object') {

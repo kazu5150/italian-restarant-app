@@ -6,13 +6,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { 
   Database, 
   Plus, 
-  Edit, 
   Trash2, 
   TestTube, 
   CheckCircle, 
@@ -40,9 +38,9 @@ interface TestResult {
 export default function TestCRUDPage() {
   const [testResults, setTestResults] = useState<TestResult[]>([])
   const [isRunning, setIsRunning] = useState(false)
-  const [categories, setCategories] = useState<any[]>([])
-  const [menuItems, setMenuItems] = useState<any[]>([])
-  const [tables, setTables] = useState<any[]>([])
+  const [categories, setCategories] = useState<{id: string, name: string, description?: string, display_order: number}[]>([])
+  const [menuItems, setMenuItems] = useState<{id: string, name: string, description?: string, price: number, is_available: boolean, menu_categories?: {name: string}}[]>([])
+  const [tables, setTables] = useState<{id: string, table_number: number, capacity: number, status: string}[]>([])
   const [newCategory, setNewCategory] = useState({ name: '', description: '' })
   const [newTable, setNewTable] = useState({ table_number: '', capacity: '4' })
 
@@ -167,8 +165,7 @@ export default function TestCRUDPage() {
       setCategories(categoriesData)
       setMenuItems(menuItemsData)
       setTables(tablesData)
-    } catch (error) {
-      console.error('Error loading data:', error)
+    } catch {
       toast.error('データの読み込みに失敗しました')
     }
   }
@@ -191,7 +188,7 @@ export default function TestCRUDPage() {
       })
       setNewCategory({ name: '', description: '' })
       loadData()
-    } catch (error) {
+    } catch {
       // エラーはsupabase-admin.tsで処理済み
     }
   }
@@ -209,7 +206,7 @@ export default function TestCRUDPage() {
       })
       setNewTable({ table_number: '', capacity: '4' })
       loadData()
-    } catch (error) {
+    } catch {
       // エラーはsupabase-admin.tsで処理済み
     }
   }
@@ -220,7 +217,7 @@ export default function TestCRUDPage() {
     try {
       await menuCategoriesAdmin.delete(id)
       loadData()
-    } catch (error) {
+    } catch {
       // エラーはsupabase-admin.tsで処理済み
     }
   }
@@ -231,7 +228,7 @@ export default function TestCRUDPage() {
     try {
       await tablesAdmin.delete(id)
       loadData()
-    } catch (error) {
+    } catch {
       // エラーはsupabase-admin.tsで処理済み
     }
   }

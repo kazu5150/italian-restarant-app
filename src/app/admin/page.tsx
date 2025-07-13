@@ -120,12 +120,12 @@ export default function AdminDashboard() {
         status: order.status,
         total_amount: order.total_amount,
         created_at: order.created_at,
-        table_number: (order as any).tables?.table_number
+        table_number: (order as {tables?: {table_number: number}[]}).tables?.[0]?.table_number
       }))
 
       setRecentOrders(formattedOrders)
-    } catch (error) {
-      console.error('Error fetching dashboard data:', error)
+    } catch {
+      // Error handled silently
     } finally {
       setLoading(false)
     }

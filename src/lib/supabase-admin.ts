@@ -15,7 +15,6 @@ export const menuCategoriesAdmin = {
       .order('display_order')
     
     if (error) {
-      console.error('Error fetching categories:', error)
       toast.error('カテゴリの取得に失敗しました')
       return []
     }
@@ -35,7 +34,6 @@ export const menuCategoriesAdmin = {
       .single()
     
     if (error) {
-      console.error('Error creating category:', error)
       toast.error('カテゴリの作成に失敗しました')
       throw error
     }
@@ -58,7 +56,6 @@ export const menuCategoriesAdmin = {
       .single()
     
     if (error) {
-      console.error('Error updating category:', error)
       toast.error('カテゴリの更新に失敗しました')
       throw error
     }
@@ -86,7 +83,6 @@ export const menuCategoriesAdmin = {
       .eq('id', id)
     
     if (error) {
-      console.error('Error deleting category:', error)
       toast.error('カテゴリの削除に失敗しました')
       throw error
     }
@@ -114,7 +110,6 @@ export const menuItemsAdmin = {
       .order('created_at', { ascending: false })
     
     if (error) {
-      console.error('Error fetching menu items:', error)
       toast.error('メニューアイテムの取得に失敗しました')
       return []
     }
@@ -142,7 +137,6 @@ export const menuItemsAdmin = {
       .single()
     
     if (error) {
-      console.error('Error creating menu item:', error)
       toast.error('メニューアイテムの作成に失敗しました')
       throw error
     }
@@ -169,7 +163,6 @@ export const menuItemsAdmin = {
       .single()
     
     if (error) {
-      console.error('Error updating menu item:', error)
       toast.error('メニューアイテムの更新に失敗しました')
       throw error
     }
@@ -197,7 +190,6 @@ export const menuItemsAdmin = {
       .eq('id', id)
     
     if (error) {
-      console.error('Error deleting menu item:', error)
       toast.error('メニューアイテムの削除に失敗しました')
       throw error
     }
@@ -215,7 +207,6 @@ export const menuItemsAdmin = {
       .single()
     
     if (fetchError) {
-      console.error('Error fetching menu item:', fetchError)
       toast.error('メニューアイテムの取得に失敗しました')
       throw fetchError
     }
@@ -228,7 +219,6 @@ export const menuItemsAdmin = {
       .single()
     
     if (error) {
-      console.error('Error updating availability:', error)
       toast.error('在庫状況の更新に失敗しました')
       throw error
     }
@@ -251,7 +241,6 @@ export const tablesAdmin = {
       .order('table_number')
     
     if (error) {
-      console.error('Error fetching tables:', error)
       toast.error('テーブルの取得に失敗しました')
       return []
     }
@@ -274,7 +263,6 @@ export const tablesAdmin = {
       .single()
     
     if (error) {
-      console.error('Error creating table:', error)
       toast.error('テーブルの作成に失敗しました')
       throw error
     }
@@ -297,7 +285,6 @@ export const tablesAdmin = {
       .single()
     
     if (error) {
-      console.error('Error updating table:', error)
       toast.error('テーブルの更新に失敗しました')
       throw error
     }
@@ -325,7 +312,6 @@ export const tablesAdmin = {
       .eq('id', id)
     
     if (error) {
-      console.error('Error deleting table:', error)
       toast.error('テーブルの削除に失敗しました')
       throw error
     }
@@ -381,7 +367,6 @@ export const ordersAdmin = {
     const { data, error } = await query.order('created_at', { ascending: false })
     
     if (error) {
-      console.error('Error fetching orders:', error)
       toast.error('注文の取得に失敗しました')
       return []
     }
@@ -401,7 +386,6 @@ export const ordersAdmin = {
       .single()
     
     if (error) {
-      console.error('Error updating order status:', error)
       toast.error('注文ステータスの更新に失敗しました')
       throw error
     }
@@ -429,7 +413,6 @@ export const ordersAdmin = {
       .single()
     
     if (fetchError) {
-      console.error('Error fetching order:', fetchError)
       toast.error('注文の取得に失敗しました')
       throw fetchError
     }
@@ -446,7 +429,6 @@ export const ordersAdmin = {
       .eq('order_id', id)
     
     if (itemsError) {
-      console.error('Error deleting order items:', itemsError)
       toast.error('注文アイテムの削除に失敗しました')
       throw itemsError
     }
@@ -458,7 +440,6 @@ export const ordersAdmin = {
       .eq('id', id)
     
     if (error) {
-      console.error('Error deleting order:', error)
       toast.error('注文の削除に失敗しました')
       throw error
     }
@@ -498,8 +479,7 @@ export const statsAdmin = {
         readyOrders,
         servedOrders
       }
-    } catch (error) {
-      console.error('Error fetching dashboard stats:', error)
+    } catch {
       toast.error('統計情報の取得に失敗しました')
       return {
         totalOrders: 0,
@@ -520,7 +500,7 @@ export const statsAdmin = {
 
 export const testConnection = async () => {
   try {
-    const { data, error } = await supabase
+    const { error } = await supabase
       .from('menu_categories')
       .select('count(*)')
       .single()
@@ -530,8 +510,7 @@ export const testConnection = async () => {
     // Supabase connection successful
     toast.success('データベース接続成功')
     return true
-  } catch (error) {
-    console.error('❌ Supabase connection failed:', error)
+  } catch {
     toast.error('データベース接続失敗')
     return false
   }

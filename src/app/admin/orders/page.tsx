@@ -1,16 +1,14 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { supabase, type Order } from '@/lib/supabase'
 import AdminLayout from '@/components/admin/AdminLayout'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { 
-  ArrowLeft,
   RefreshCw,
   Clock,
   ChefHat,
@@ -42,6 +40,29 @@ export default function AdminOrdersPage() {
   const [refreshing, setRefreshing] = useState(false)
   const [activeTab, setActiveTab] = useState('all')
 
+  const filterOrders = useCallback(() => {
+    let filtered = orders
+    
+    switch (activeTab) {
+      case 'pending':
+        filtered = orders.filter(order => order.status === 'pending')
+        break
+      case 'preparing':
+        filtered = orders.filter(order => order.status === 'preparing')
+        break
+      case 'ready':
+        filtered = orders.filter(order => order.status === 'ready')
+        break
+      case 'completed':
+        filtered = orders.filter(order => order.status === 'completed')
+        break
+      default:
+        filtered = orders
+    }
+    
+    setFilteredOrders(filtered)
+  }, [orders, activeTab])
+
   useEffect(() => {
     fetchOrders()
     
@@ -64,7 +85,7 @@ export default function AdminOrdersPage() {
 
   useEffect(() => {
     filterOrders()
-  }, [orders, activeTab])
+  }, [filterOrders])
 
   const fetchOrders = async () => {
     try {
@@ -83,36 +104,12 @@ export default function AdminOrdersPage() {
 
       if (error) throw error
       setOrders(data as OrderWithTable[])
-    } catch (error) {
-      console.error('Error fetching orders:', error)
+    } catch {
       toast.error('注文データの取得に失敗しました')
     } finally {
       setLoading(false)
       setRefreshing(false)
     }
-  }
-
-  const filterOrders = () => {
-    let filtered = orders
-    
-    switch (activeTab) {
-      case 'pending':
-        filtered = orders.filter(order => order.status === 'pending')
-        break
-      case 'preparing':
-        filtered = orders.filter(order => order.status === 'preparing')
-        break
-      case 'ready':
-        filtered = orders.filter(order => order.status === 'ready')
-        break
-      case 'completed':
-        filtered = orders.filter(order => order.status === 'completed')
-        break
-      default:
-        filtered = orders
-    }
-    
-    setFilteredOrders(filtered)
   }
 
   const handleRefresh = () => {
@@ -131,8 +128,7 @@ export default function AdminOrdersPage() {
       
       toast.success('注文ステータスを更新しました')
       fetchOrders()
-    } catch (error) {
-      console.error('Error updating order status:', error)
+    } catch {
       toast.error('ステータスの更新に失敗しました')
     }
   }
@@ -163,7 +159,6 @@ export default function AdminOrdersPage() {
   }
 
   const getItemsSummary = (orderItems: OrderWithTable['order_items']) => {
-    const totalItems = orderItems.reduce((sum, item) => sum + item.quantity, 0)
     const firstItem = orderItems[0]?.menu_items.name
     
     if (orderItems.length === 1) {

@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { supabase, type MenuCategory, type MenuItem } from '@/lib/supabase'
+import { type MenuCategory, type MenuItem } from '@/lib/supabase'
 import AdminLayout from '@/components/admin/AdminLayout'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -10,7 +10,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { 
   UtensilsCrossed, 
@@ -18,7 +18,6 @@ import {
   Edit, 
   Trash2, 
   ArrowLeft,
-  Upload,
   Eye,
   EyeOff
 } from 'lucide-react'
@@ -67,8 +66,7 @@ export default function AdminMenuPage() {
       
       setCategories(categoriesData)
       setMenuItems(itemsData)
-    } catch (error) {
-      console.error('Error fetching data:', error)
+    } catch {
       toast.error('データの取得に失敗しました')
     } finally {
       setLoading(false)
@@ -114,7 +112,7 @@ export default function AdminMenuPage() {
       })
       setShowAddDialog(false)
       fetchData()
-    } catch (error) {
+    } catch {
       // エラーはsupabase-admin.tsで処理済み
     }
   }
@@ -145,7 +143,7 @@ export default function AdminMenuPage() {
       setShowEditDialog(false)
       setEditingItem(null)
       fetchData()
-    } catch (error) {
+    } catch {
       // エラーはsupabase-admin.tsで処理済み
     }
   }
@@ -156,7 +154,7 @@ export default function AdminMenuPage() {
     try {
       await menuItemsAdmin.delete(itemId)
       fetchData()
-    } catch (error) {
+    } catch {
       // エラーはsupabase-admin.tsで処理済み
     }
   }
@@ -165,7 +163,7 @@ export default function AdminMenuPage() {
     try {
       await menuItemsAdmin.toggleAvailability(itemId)
       fetchData()
-    } catch (error) {
+    } catch {
       // エラーはsupabase-admin.tsで処理済み
     }
   }
@@ -186,7 +184,7 @@ export default function AdminMenuPage() {
       setNewCategory({ name: '', description: '' })
       setShowCategoryDialog(false)
       fetchData()
-    } catch (error) {
+    } catch {
       // エラーはsupabase-admin.tsで処理済み
     }
   }

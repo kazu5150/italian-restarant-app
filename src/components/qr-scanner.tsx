@@ -28,7 +28,7 @@ export function QRScanner({ onScanSuccess, onError }: QRScannerProps) {
             onScanSuccess(result.data)
           },
           {
-            onDecodeError: (err) => {
+            onDecodeError: () => {
               // QR decode error (non-critical)
             },
             highlightScanRegion: true,
@@ -37,8 +37,7 @@ export function QRScanner({ onScanSuccess, onError }: QRScannerProps) {
         )
 
         setScanner(qrScanner)
-      } catch (error) {
-        console.error('Failed to initialize QR scanner:', error)
+      } catch {
         setHasCamera(false)
         onError?.('カメラの初期化に失敗しました')
       }
@@ -49,7 +48,7 @@ export function QRScanner({ onScanSuccess, onError }: QRScannerProps) {
     return () => {
       scanner?.destroy()
     }
-  }, [onScanSuccess, onError])
+  }, [onScanSuccess, onError, scanner])
 
   const startScanning = async () => {
     if (!scanner) return
@@ -57,8 +56,7 @@ export function QRScanner({ onScanSuccess, onError }: QRScannerProps) {
     try {
       await scanner.start()
       setIsScanning(true)
-    } catch (error) {
-      console.error('Failed to start scanner:', error)
+    } catch {
       setHasCamera(false)
       onError?.('カメラへのアクセスに失敗しました')
     }

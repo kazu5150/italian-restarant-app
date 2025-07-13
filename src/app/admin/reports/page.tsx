@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '@/lib/supabase'
 import AdminLayout from '@/components/admin/AdminLayout'
 import { Button } from '@/components/ui/button'
@@ -10,12 +10,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { 
-  BarChart3,
   TrendingUp,
   DollarSign,
   ShoppingCart,
   Clock,
-  Calendar,
   Download,
   Filter
 } from 'lucide-react'
@@ -49,18 +47,14 @@ interface ReportFilters {
 
 export default function AdminReports() {
   const [reportData, setReportData] = useState<ReportData | null>(null)
-  const [loading, setLoading] = useState(true)
+  const [, setLoading] = useState(true)
   const [filters, setFilters] = useState<ReportFilters>({
     startDate: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
     endDate: new Date().toISOString().split('T')[0],
     period: 'week'
   })
 
-  useEffect(() => {
-    fetchReportData()
-  }, [filters])
-
-  const fetchReportData = async () => {
+  const fetchReportData = useCallback(async () => {
     setLoading(true)
     try {
       const { data: ordersData, error: ordersError } = await supabase
@@ -98,14 +92,18 @@ export default function AdminReports() {
         averageOrderTime,
         customerSatisfaction
       })
-    } catch (error) {
-      console.error('Error fetching report data:', error)
+    } catch {
+      // Error handled silently
     } finally {
       setLoading(false)
     }
-  }
+  }, [filters.startDate, filters.endDate])
 
-  const processDailySales = (orders: any[]) => {
+  useEffect(() => {
+    fetchReportData()
+  }, [fetchReportData])
+
+  const processDailySales = (orders: Array<{created_at: string, total_amount: number}>) => {
     const salesByDate: { [key: string]: { revenue: number; orders: number } } = {}
     
     orders.forEach(order => {
@@ -124,12 +122,12 @@ export default function AdminReports() {
     }))
   }
 
-  const processPopularItems = (orders: any[]) => {
+  const processPopularItems = (orders: Array<{order_items?: Array<{menu_items: {name: string}[], quantity: number, unit_price: number}>}>) => {
     const itemStats: { [key: string]: { quantity: number; revenue: number } } = {}
     
     orders.forEach(order => {
-      order.order_items?.forEach((item: any) => {
-        const name = item.menu_items?.name || 'Unknown'
+      order.order_items?.forEach((item) => {
+        const name = item.menu_items?.[0]?.name || 'Unknown'
         if (!itemStats[name]) {
           itemStats[name] = { quantity: 0, revenue: 0 }
         }
@@ -148,7 +146,7 @@ export default function AdminReports() {
       .slice(0, 10)
   }
 
-  const processHourlyData = (orders: any[]) => {
+  const processHourlyData = (orders: Array<{created_at: string, total_amount: number}>) => {
     const hourlyStats: { [key: number]: { orders: number; revenue: number } } = {}
     
     for (let hour = 0; hour < 24; hour++) {
@@ -239,7 +237,7 @@ export default function AdminReports() {
                         key={key}
                         variant={filters.period === key ? 'default' : 'outline'}
                         size="sm"
-                        onClick={() => handlePeriodChange(key as any)}
+                        onClick={() => handlePeriodChange(key as ReportFilters['period'])}
                       >
                         {label}
                       </Button>

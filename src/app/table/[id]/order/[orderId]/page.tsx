@@ -1,15 +1,14 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useParams } from 'next/navigation'
 import { supabase, type Order, type OrderItem, type MenuItem } from '@/lib/supabase'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
 import { 
   CheckCircle, 
-  Clock, 
   ChefHat, 
   Truck, 
   UtensilsCrossed,
@@ -43,7 +42,7 @@ export default function OrderStatusPage() {
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
 
-  const fetchOrder = async () => {
+  const fetchOrder = useCallback(async () => {
     try {
       const { data, error } = await supabase
         .from('orders')
@@ -59,14 +58,13 @@ export default function OrderStatusPage() {
 
       if (error) throw error
       setOrder(data as OrderWithItems)
-    } catch (error) {
-      console.error('Error fetching order:', error)
+    } catch {
       toast.error('注文情報の取得に失敗しました')
     } finally {
       setLoading(false)
       setRefreshing(false)
     }
-  }
+  }, [orderId])
 
   useEffect(() => {
     fetchOrder()
@@ -87,7 +85,7 @@ export default function OrderStatusPage() {
     return () => {
       subscription.unsubscribe()
     }
-  }, [orderId])
+  }, [orderId, fetchOrder])
 
   const handleRefresh = () => {
     setRefreshing(true)
@@ -271,7 +269,7 @@ export default function OrderStatusPage() {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {statusSteps.map((step, index) => {
+                {statusSteps.map((step) => {
                   const Icon = step.icon
                   return (
                     <div key={step.status} className="flex items-center gap-4">
@@ -318,7 +316,7 @@ export default function OrderStatusPage() {
               <CardTitle>ご注文内容</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
-              {order.order_items.map((item, index) => (
+              {order.order_items.map((item, _index) => (
                 <div key={item.id}>
                   <div className="flex justify-between items-start">
                     <div className="flex-1">
@@ -333,7 +331,7 @@ export default function OrderStatusPage() {
                       </span>
                     </div>
                   </div>
-                  {index < order.order_items.length - 1 && <Separator className="mt-3" />}
+                  {_index < order.order_items.length - 1 && <Separator className="mt-3" />}
                 </div>
               ))}
               

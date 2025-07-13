@@ -38,7 +38,7 @@ export default function Home() {
       } else {
         toast.error('無効なQRコードです')
       }
-    } catch (error) {
+    } catch {
       toast.error('QRコードの読み取りに失敗しました')
     }
   }
