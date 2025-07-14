@@ -48,7 +48,7 @@ export function QRScanner({ onScanSuccess, onError }: QRScannerProps) {
     return () => {
       scanner?.destroy()
     }
-  }, [onScanSuccess, onError, scanner])
+  }, [onScanSuccess, onError])
 
   const startScanning = async () => {
     if (!scanner) return
