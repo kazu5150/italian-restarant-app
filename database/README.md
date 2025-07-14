@@ -26,6 +26,10 @@ database/
    - 開発環境用の許可的なRow Level Security (RLS) ポリシー
    - 本番環境では適切な認証ベースのポリシーに変更が必要
 
+3. **`03-storage-setup.sql`** - 画像アップロード用ストレージの設定
+   - `menu-images`バケットの作成
+   - 画像アップロード用のRLSポリシーの設定
+
 ### 2. マイグレーション (`migrations/`)
 
 データベーススキーマに変更が必要な場合：
@@ -49,6 +53,7 @@ database/
 # 2. 以下のSQLファイルを順番に実行：
 database/setup/01-schema.sql
 database/setup/02-rls-policies.sql
+database/setup/03-storage-setup.sql
 ```
 
 ### 既存プロジェクトの修正

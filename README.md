@@ -65,7 +65,8 @@ Next.js 14、Supabase、shadcn/uiで構築された、モダンでモバイル�
    - Supabase SQL エディターで以下のSQLファイルを順番に実行:
      1. `database/setup/01-schema.sql` - 基本テーブル構造
      2. `database/setup/02-rls-policies.sql` - 開発用RLSポリシー
-     3. `database/migrations/01-fix-tables-schema.sql` - テーブルスキーマの修正（必要な場合）
+     3. `database/setup/03-storage-setup.sql` - 画像アップロード用ストレージ
+     4. `database/migrations/01-fix-tables-schema.sql` - テーブルスキーマの修正（必要な場合）
 
 4. **環境変数を設定**
    `.env.local`ファイルを作成（.env.exampleが存在しない場合）:

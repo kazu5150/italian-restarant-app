@@ -25,9 +25,11 @@ import { toast } from 'sonner'
 import Link from 'next/link'
 import {
   menuCategoriesAdmin,
-  menuItemsAdmin
+  menuItemsAdmin,
+  imageUploadAdmin
 } from '@/lib/supabase-admin'
 import { formatPrice } from '@/lib/utils'
+import { ImageUpload } from '@/components/ui/image-upload'
 
 export default function AdminMenuPage() {
   const [categories, setCategories] = useState<MenuCategory[]>([])
@@ -76,6 +78,40 @@ export default function AdminMenuPage() {
   const getCategoryName = (categoryId: string) => {
     const category = categories.find(cat => cat.id === categoryId)
     return category?.name || 'Unknown'
+  }
+
+  const handleImageUpload = async (file: File): Promise<string> => {
+    try {
+      const fileExtension = file.name.split('.').pop() || 'jpg'
+      const categoryName = getCategoryName(newItem.category_id) || 'unknown'
+      const imagePath = imageUploadAdmin.generateImagePath(
+        categoryName,
+        newItem.name || 'unnamed',
+        fileExtension
+      )
+      
+      const imageUrl = await imageUploadAdmin.uploadImage(file, imagePath)
+      setNewItem(prev => ({ ...prev, image_url: imageUrl }))
+      return imageUrl
+    } catch (error) {
+      console.error('画像アップロードエラー:', error)
+      if (error instanceof Error) {
+        toast.error(`画像アップロードに失敗しました: ${error.message}`)
+      } else {
+        toast.error('画像アップロードに失敗しました')
+      }
+      throw error
+    }
+  }
+
+  const handleDebugStorage = async () => {
+    try {
+      await imageUploadAdmin.debugStorageStatus()
+      toast.success('ストレージ状態をコンソールに出力しました')
+    } catch (error) {
+      console.error('デバッグエラー:', error)
+      toast.error('デバッグに失敗しました')
+    }
   }
   
   const handleAddItem = async () => {
@@ -254,6 +290,9 @@ export default function AdminMenuPage() {
                   <Plus className="h-4 w-4 mr-2" />
                   メニュー追加
                 </Button>
+                <Button variant="outline" onClick={handleDebugStorage}>
+                  デバッグ
+                </Button>
               </div>
             </div>
           </div>
@@ -388,7 +427,7 @@ export default function AdminMenuPage() {
         
         {/* メニューアイテム追加ダイアログ */}
         <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
-          <DialogContent className="max-w-md">
+          <DialogContent className="max-w-2xl">
             <DialogHeader>
               <DialogTitle>新しいメニューアイテム</DialogTitle>
               <DialogDescription>
@@ -447,15 +486,11 @@ export default function AdminMenuPage() {
                 />
               </div>
               
-              <div className="space-y-2">
-                <Label htmlFor="item-image">画像URL</Label>
-                <Input
-                  id="item-image"
-                  value={newItem.image_url}
-                  onChange={(e) => setNewItem(prev => ({ ...prev, image_url: e.target.value }))}
-                  placeholder="https://example.com/image.jpg"
-                />
-              </div>
+              <ImageUpload
+                onImageUpload={handleImageUpload}
+                currentImageUrl={newItem.image_url}
+                className="col-span-2"
+              />
             </div>
             <DialogFooter>
               <Button variant="outline" onClick={() => setShowAddDialog(false)}>
@@ -470,7 +505,7 @@ export default function AdminMenuPage() {
         
         {/* メニューアイテム編集ダイアログ */}
         <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
-          <DialogContent className="max-w-md">
+          <DialogContent className="max-w-2xl">
             <DialogHeader>
               <DialogTitle>メニューアイテム編集</DialogTitle>
               <DialogDescription>
@@ -529,15 +564,11 @@ export default function AdminMenuPage() {
                 />
               </div>
               
-              <div className="space-y-2">
-                <Label htmlFor="edit-item-image">画像URL</Label>
-                <Input
-                  id="edit-item-image"
-                  value={newItem.image_url}
-                  onChange={(e) => setNewItem(prev => ({ ...prev, image_url: e.target.value }))}
-                  placeholder="https://example.com/image.jpg"
-                />
-              </div>
+              <ImageUpload
+                onImageUpload={handleImageUpload}
+                currentImageUrl={newItem.image_url}
+                className="col-span-2"
+              />
             </div>
             <DialogFooter>
               <Button variant="outline" onClick={() => setShowEditDialog(false)}>

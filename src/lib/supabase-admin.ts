@@ -3,6 +3,126 @@ import { supabase } from './supabase'
 import { toast } from 'sonner'
 
 // =============================================
+// IMAGE UPLOAD HELPERS
+// =============================================
+
+export const imageUploadAdmin = {
+  // ストレージバケットの存在確認 (開発用: チェックをスキップ)
+  async ensureBucket(): Promise<void> {
+    try {
+      const { data: buckets, error: listError } = await supabase.storage.listBuckets()
+      
+      if (listError) {
+        console.error('バケット一覧取得エラー:', listError)
+        console.warn('バケット存在チェックをスキップして続行します（開発モード）')
+        
+        // 開発環境ではバケット存在チェックをスキップ
+        return
+      }
+
+      console.log('利用可能なバケット:', buckets)
+      const bucketExists = buckets?.some(bucket => bucket.name === 'menu-images')
+      console.log('menu-imagesバケットの存在:', bucketExists)
+      
+      if (!bucketExists) {
+        // バケット一覧をログで確認
+        console.log('バケット一覧の詳細:')
+        buckets?.forEach(bucket => {
+          console.log(`- ID: ${bucket.id}, Name: ${bucket.name}, Public: ${bucket.public}`)
+        })
+        
+        console.warn('menu-imagesバケットが検出されませんが、アップロードを試行します')
+        // バケットが見つからない場合でも、アップロードを試行
+        return
+      }
+    } catch (error) {
+      // 予期しないエラーの場合でも続行
+      console.error('バケット確認中にエラーが発生しましたが、アップロードを試行します:', error)
+      return
+    }
+  },
+
+  // 画像をSupabaseストレージにアップロード
+  async uploadImage(file: File, path: string): Promise<string> {
+    try {
+      // バケットの存在確認
+      await this.ensureBucket()
+
+      const { data, error } = await supabase.storage
+        .from('menu-images')
+        .upload(path, file, {
+          cacheControl: '3600',
+          upsert: true
+        })
+
+      if (error) {
+        console.error('画像アップロードエラー:', error)
+        throw new Error(`画像のアップロードに失敗しました: ${error.message}`)
+      }
+
+      // パブリックURLを取得
+      const { data: publicUrlData } = supabase.storage
+        .from('menu-images')
+        .getPublicUrl(data.path)
+
+      return publicUrlData.publicUrl
+    } catch (error) {
+      console.error('画像アップロード処理エラー:', error)
+      throw error
+    }
+  },
+
+  // 画像を削除
+  async deleteImage(path: string): Promise<void> {
+    const { error } = await supabase.storage
+      .from('menu-images')
+      .remove([path])
+
+    if (error) {
+      console.error('画像削除エラー:', error)
+      throw new Error('画像の削除に失敗しました')
+    }
+  },
+
+  // メニューアイテム用の画像パスを生成
+  generateImagePath(categoryName: string, itemName: string, fileExtension: string): string {
+    const timestamp = Date.now()
+    const sanitizedCategory = categoryName.toLowerCase().replace(/[^a-z0-9]/g, '-')
+    const sanitizedItem = itemName.toLowerCase().replace(/[^a-z0-9]/g, '-')
+    return `${sanitizedCategory}/${sanitizedItem}-${timestamp}.${fileExtension}`
+  },
+
+  // デバッグ用：ストレージバケットの状態を確認
+  async debugStorageStatus(): Promise<void> {
+    try {
+      const { data: buckets, error: listError } = await supabase.storage.listBuckets()
+      console.log('利用可能なバケット:', buckets)
+      
+      if (listError) {
+        console.error('バケット一覧取得エラー:', listError)
+        return
+      }
+
+      const menuImagesBucket = buckets?.find(bucket => bucket.name === 'menu-images')
+      console.log('menu-imagesバケット:', menuImagesBucket)
+
+      if (menuImagesBucket) {
+        const { data: files, error: filesError } = await supabase.storage
+          .from('menu-images')
+          .list()
+        
+        console.log('menu-imagesバケット内ファイル:', files)
+        if (filesError) {
+          console.error('ファイル一覧取得エラー:', filesError)
+        }
+      }
+    } catch (error) {
+      console.error('ストレージ状態確認エラー:', error)
+    }
+  }
+}
+
+// =============================================
 // MENU CATEGORIES CRUD
 // =============================================
 
