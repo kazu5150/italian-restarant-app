@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import { ThemeToggle } from '@/components/ui/theme-toggle'
 import { 
   UtensilsCrossed,
   LayoutDashboard,
@@ -185,6 +186,8 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
             </div>
             
             <div className="flex items-center gap-3">
+              <ThemeToggle />
+              
               <Button variant="outline" size="sm" asChild>
                 <Link href="/">
                   顧客画面を見る
