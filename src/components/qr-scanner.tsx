@@ -18,6 +18,8 @@ export function QRScanner({ onScanSuccess, onError }: QRScannerProps) {
   const [hasCamera, setHasCamera] = useState(true)
 
   useEffect(() => {
+    let currentScanner: QrScanner | null = null
+
     const initScanner = async () => {
       if (!videoRef.current) return
 
@@ -36,6 +38,7 @@ export function QRScanner({ onScanSuccess, onError }: QRScannerProps) {
           }
         )
 
+        currentScanner = qrScanner
         setScanner(qrScanner)
       } catch {
         setHasCamera(false)
@@ -46,7 +49,7 @@ export function QRScanner({ onScanSuccess, onError }: QRScannerProps) {
     initScanner()
 
     return () => {
-      scanner?.destroy()
+      currentScanner?.destroy()
     }
   }, [onScanSuccess, onError])
 
