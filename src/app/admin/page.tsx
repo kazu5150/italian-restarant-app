@@ -78,8 +78,14 @@ export default function AdminDashboard() {
 
   const fetchDashboardData = async () => {
     try {
-      // Fetch orders with table information
-      const { data: ordersData, error: ordersError } = await supabase
+      // Get today's date range (Japan timezone)
+      const today = new Date()
+      today.setHours(0, 0, 0, 0)
+      const tomorrow = new Date(today)
+      tomorrow.setDate(tomorrow.getDate() + 1)
+
+      // Fetch all orders for today
+      const { data: todayOrdersData, error: todayOrdersError } = await supabase
         .from('orders')
         .select(`
           id,
@@ -87,20 +93,37 @@ export default function AdminDashboard() {
           status,
           total_amount,
           created_at,
-          tables (table_number)
+          tables!inner(table_number)
+        `)
+        .gte('created_at', today.toISOString())
+        .lt('created_at', tomorrow.toISOString())
+        .order('created_at', { ascending: false })
+
+      if (todayOrdersError) throw todayOrdersError
+
+      // Fetch recent orders (not limited to today)
+      const { data: recentOrdersData, error: recentOrdersError } = await supabase
+        .from('orders')
+        .select(`
+          id,
+          table_id,
+          status,
+          total_amount,
+          created_at,
+          tables!inner(table_number)
         `)
         .order('created_at', { ascending: false })
-        .limit(50)
+        .limit(10)
 
-      if (ordersError) throw ordersError
+      if (recentOrdersError) throw recentOrdersError
 
-      // Calculate stats
-      const totalOrders = ordersData.length
-      const pendingOrders = ordersData.filter(order => order.status === 'pending').length
-      const preparingOrders = ordersData.filter(order => order.status === 'preparing').length
-      const readyOrders = ordersData.filter(order => order.status === 'ready').length
-      const completedOrders = ordersData.filter(order => order.status === 'completed').length
-      const totalRevenue = ordersData.reduce((sum, order) => sum + order.total_amount, 0)
+      // Calculate stats from today's orders only
+      const totalOrders = todayOrdersData.length
+      const pendingOrders = todayOrdersData.filter(order => order.status === 'pending').length
+      const preparingOrders = todayOrdersData.filter(order => order.status === 'preparing').length
+      const readyOrders = todayOrdersData.filter(order => order.status === 'ready').length
+      const completedOrders = todayOrdersData.filter(order => order.status === 'completed').length
+      const totalRevenue = todayOrdersData.reduce((sum, order) => sum + order.total_amount, 0)
       const averageOrderValue = totalOrders > 0 ? totalRevenue / totalOrders : 0
 
       setStats({
@@ -113,14 +136,14 @@ export default function AdminDashboard() {
         averageOrderValue
       })
 
-      // Format recent orders
-      const formattedOrders: RecentOrder[] = ordersData.slice(0, 10).map(order => ({
+      // Format recent orders (from all orders, not just today)
+      const formattedOrders: RecentOrder[] = recentOrdersData.map(order => ({
         id: order.id,
         table_id: order.table_id,
         status: order.status,
         total_amount: order.total_amount,
         created_at: order.created_at,
-        table_number: (order as {tables?: {table_number: number}[]}).tables?.[0]?.table_number
+        table_number: (order as any).tables?.table_number
       }))
 
       setRecentOrders(formattedOrders)
@@ -270,7 +293,9 @@ export default function AdminDashboard() {
                             テーブル {order.table_number || 'N/A'}
                           </p>
                           <p className="text-sm text-muted-foreground">
-                            {new Date(order.created_at).toLocaleTimeString('ja-JP', {
+                            {new Date(order.created_at).toLocaleDateString('ja-JP', {
+                              month: 'numeric',
+                              day: 'numeric',
                               hour: '2-digit',
                               minute: '2-digit'
                             })}
