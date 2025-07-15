@@ -73,7 +73,8 @@ export default function AdminDashboard() {
     totalRevenue: 0,
     averageOrderValue: 0
   })
-  const [recentOrders, setRecentOrders] = useState<RecentOrder[]>([])
+  const [todayOrders, setTodayOrders] = useState<RecentOrder[]>([])
+  const [allOrders, setAllOrders] = useState<RecentOrder[]>([])
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState('today')
 
@@ -175,8 +176,8 @@ export default function AdminDashboard() {
         averageOrderValue: allAverage
       })
 
-      // Format recent orders
-      const formattedOrders: RecentOrder[] = (allOrdersData.slice(0, 10) as unknown as OrderWithTable[]).map(order => ({
+      // Format today's orders
+      const formattedTodayOrders: RecentOrder[] = (todayOrdersData.slice(0, 10) as unknown as OrderWithTable[]).map(order => ({
         id: order.id,
         table_id: order.table_id,
         status: order.status,
@@ -185,7 +186,19 @@ export default function AdminDashboard() {
         table_number: order.tables?.table_number
       }))
 
-      setRecentOrders(formattedOrders)
+      setTodayOrders(formattedTodayOrders)
+
+      // Format all time orders
+      const formattedAllOrders: RecentOrder[] = (allOrdersData.slice(0, 10) as unknown as OrderWithTable[]).map(order => ({
+        id: order.id,
+        table_id: order.table_id,
+        status: order.status,
+        total_amount: order.total_amount,
+        created_at: order.created_at,
+        table_number: order.tables?.table_number
+      }))
+
+      setAllOrders(formattedAllOrders)
     } catch {
       // Error handled silently
     } finally {
@@ -222,6 +235,7 @@ export default function AdminDashboard() {
   }
 
   const stats = activeTab === 'today' ? todayStats : allTimeStats
+  const recentOrders = activeTab === 'today' ? todayOrders : allOrders
 
   return (
     <AdminLayout>
