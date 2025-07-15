@@ -38,6 +38,14 @@ interface RecentOrder {
   total_amount: number
   created_at: string
   table_number?: number
+}
+
+interface OrderWithTable {
+  id: string
+  table_id: string
+  status: string
+  total_amount: number
+  created_at: string
   tables?: {
     table_number: number
   }
@@ -137,13 +145,13 @@ export default function AdminDashboard() {
       })
 
       // Format recent orders (from all orders, not just today)
-      const formattedOrders: RecentOrder[] = recentOrdersData.map(order => ({
+      const formattedOrders: RecentOrder[] = (recentOrdersData as unknown as OrderWithTable[]).map(order => ({
         id: order.id,
         table_id: order.table_id,
         status: order.status,
         total_amount: order.total_amount,
         created_at: order.created_at,
-        table_number: (order as any).tables?.table_number
+        table_number: order.tables?.table_number
       }))
 
       setRecentOrders(formattedOrders)
